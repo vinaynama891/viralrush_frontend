@@ -78,6 +78,12 @@ export default function ViralPage() {
   const [playingVideoTitle, setPlayingVideoTitle] = useState("");
   const [selectedPlatform, setSelectedPlatform] = useState("youtube");
 
+  // Refinement states
+  const [refineLoading, setRefineLoading] = useState(false);
+  const [refinedData, setRefinedData] = useState(null);
+  const [showRefineModal, setShowRefineModal] = useState(false);
+  const [selectedVideoToRefine, setSelectedVideoToRefine] = useState(null);
+
   const activePlatform = PLATFORMS.find(p => p.id === selectedPlatform) || PLATFORMS[0];
 
   // Filters State
@@ -185,6 +191,46 @@ export default function ViralPage() {
       showToast(msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefine = async (item) => {
+    setSelectedVideoToRefine(item);
+    setShowRefineModal(true);
+    setRefineLoading(true);
+    setRefinedData(null);
+    try {
+      const { data } = await api.post("/viral-content/refine", {
+        videoId: item.id || item.videoId,
+        title: item.title,
+        description: item.caption || item.description,
+        platform: selectedPlatform,
+        channelTitle: item.channelTitle || item.creator
+      });
+      if (data.success) {
+        setRefinedData(data.refined);
+      } else {
+        showToast("Failed to refine content.");
+      }
+    } catch (err) {
+      console.error("Refine error:", err);
+      showToast("Error refining content. Using fallback.");
+      setRefinedData({
+        title: `🔥 Unlocking the Secret to ${item.title || "Viral Content"}`,
+        script: {
+          hook: `Stop scrolling! If you want to know how to master ${item.title || "this niche"}, you need to watch this until the end.`,
+          structure: [
+            "1. Hook: Call out the viewer's pain point/desire",
+            "2. The Solution: Give the single most important tip for this niche",
+            "3. Call to Action: Ask the viewer to follow and drop a comment below"
+          ],
+          fullScript: `Stop scrolling! If you want to know how to master ${item.title || "this niche"}, you need to watch this until the end. Most people get this completely wrong because they focus on the wrong metrics. Here is the one thing you need to change starting today: focus on value, not volume. Do this for 30 days and watch your growth explode. If you found this helpful, make sure to follow for more tips and share this with a friend who needs it!`
+        },
+        caption: `Unpopular opinion: Most people are doing this wrong... 😳\n\nIf you've been struggling to see results with ${item.title || "this niche"}, here's your sign to change your approach. Save this video so you don't forget it, and let me know your thoughts in the comments! 👇\n\n#viral #success #tips`,
+        hashtags: ["viral", "trending", "growth", "strategy", "marketing", "contentcreator", "tips", "hacks"]
+      });
+    } finally {
+      setRefineLoading(false);
     }
   };
 
@@ -392,6 +438,7 @@ export default function ViralPage() {
                       window.open(item.videoUrl, "_blank", "noopener,noreferrer");
                     }}
                     selectedPlatform={selectedPlatform}
+                    onRefine={handleRefine}
                   />
                 ))}
               </div>
@@ -573,6 +620,19 @@ export default function ViralPage() {
           }
         }
       `}</style>
+
+      {/* Refine Content Modal */}
+      <AnimatePresence>
+        {showRefineModal && (
+          <RefineContentModal 
+            item={selectedVideoToRefine}
+            loading={refineLoading}
+            data={refinedData}
+            onClose={() => setShowRefineModal(false)}
+            onCopy={copyText}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -598,7 +658,7 @@ function TrendCard({ title, icon, items, dataKey, valueKey }) {
   );
 }
 
-function ResultCard({ item, onCopy, rank, onWatch, selectedPlatform }) {
+function ResultCard({ item, onCopy, rank, onWatch, selectedPlatform, onRefine }) {
   const isTop5 = rank <= 5;
   
   // Custom styles for top 5 ranks
@@ -751,6 +811,15 @@ function ResultCard({ item, onCopy, rank, onWatch, selectedPlatform }) {
           >
             <Play size={14} fill={selectedPlatform === "youtube" ? "#ef4444" : selectedPlatform === "instagram" ? "#e1306c" : "#1877f2"} color={selectedPlatform === "youtube" ? "#ef4444" : selectedPlatform === "instagram" ? "#e1306c" : "#1877f2"} /> {selectedPlatform === "youtube" || (item.videoUrl && (item.videoUrl.includes("youtube.com") || item.videoUrl.includes("youtu.be"))) ? "Watch" : "View"}
           </button>
+          
+          <button 
+            onClick={(e) => { e.stopPropagation(); onRefine(item); }}
+            style={{ ...S.glass, padding: "0 16px", borderRadius: "12px", color: "#a78bfa", border: "1px solid rgba(167, 139, 250, 0.3)", background: "rgba(167, 139, 250, 0.08)", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 700 }}
+            title="Refine with AI"
+          >
+            <Sparkles size={14} /> Refine
+          </button>
+
           <button 
             onClick={(e) => { e.stopPropagation(); onCopy(item.caption || item.title); }} 
             style={{ ...S.glass, padding: "0 14px", borderRadius: "12px", color: "#cbd5e1", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} 
@@ -968,3 +1037,187 @@ function SectionCard({ icon, title, text }) {
     </div>
   );
 }
+
+// AI Content Refinement Modal
+function RefineContentModal({ item, loading, data, onClose, onCopy }) {
+  if (!item) return null;
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 10000, display: "flex", justifyContent: "center", alignItems: "center", background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)", padding: "20px" }} onClick={onClose}>
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0 }} 
+        animate={{ scale: 1, opacity: 1 }} 
+        exit={{ scale: 0.9, opacity: 0 }} 
+        transition={{ type: "spring", duration: 0.4 }}
+        style={{ 
+          width: "100%", 
+          maxWidth: "800px", 
+          background: "#0d0f17", 
+          border: "1px solid rgba(255,255,255,0.08)", 
+          borderRadius: "24px",
+          maxHeight: "85vh", 
+          overflowY: "auto", 
+          position: "relative",
+          boxShadow: "0 20px 50px rgba(0,0,0,0.6)"
+        }} 
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Close Button */}
+        <button onClick={onClose} style={{ position: "absolute", top: "20px", right: "20px", background: "rgba(255,255,255,0.05)", border: "none", color: "#fff", width: "36px", height: "36px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10 }}>
+          <X size={18} />
+        </button>
+
+        {/* Content */}
+        <div style={{ padding: "32px" }}>
+          
+          {/* Header */}
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
+            <div style={{ background: "linear-gradient(135deg, #7c3aed, #db2777)", padding: "12px", borderRadius: "14px", boxShadow: "0 4px 15px rgba(124, 58, 237, 0.4)" }}>
+              <Sparkles size={24} color="#fff" />
+            </div>
+            <div>
+              <h2 style={{ fontSize: "22px", margin: "0 0 4px 0", fontWeight: 800 }}>AI Content Refinement</h2>
+              <p style={{ margin: 0, color: "#94a3b8", fontSize: "13px" }}>Refining video content to generate viral hooks, scripts, and captions.</p>
+            </div>
+          </div>
+
+          {/* Original video info summary */}
+          <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: "14px", padding: "16px", marginBottom: "24px", border: "1px solid rgba(255,255,255,0.05)", display: "flex", gap: "16px", alignItems: "center" }}>
+            <img 
+              src={item.thumbnail && !item.thumbnail.includes("1611162617474") ? item.thumbnail : "/viralrush_logo_placeholder.png"} 
+              alt="thumb" 
+              style={{ width: "80px", height: "50px", objectFit: "cover", borderRadius: "6px" }}
+              onError={e => e.target.src="/viralrush_logo_placeholder.png"}
+            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "1px", color: "#a78bfa", fontWeight: 800 }}>Original Post</div>
+              <div style={{ fontSize: "14px", fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.title}</div>
+              <div style={{ fontSize: "12px", color: "#64748b" }}>{item.creator} • {item.views} views</div>
+            </div>
+          </div>
+
+          {loading ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 0", gap: "16px" }}>
+              <div style={{ width: "40px", height: "40px", border: "4px solid rgba(167, 139, 250, 0.2)", borderTop: "4px solid #a78bfa", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+              <div style={{ color: "#94a3b8", fontSize: "14px", fontWeight: 600 }}>Analyzing video data and generating viral script suggestions...</div>
+            </div>
+          ) : data ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              
+              {/* Refined Title */}
+              <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px", padding: "20px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                  <div style={{ fontSize: "14px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <Zap size={16} color="#fbbf24" /> Refined Title Idea
+                  </div>
+                  <button onClick={() => onCopy(data.title)} style={{ background: "none", border: "none", color: "#a78bfa", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 600 }}>
+                    <Copy size={12} /> Copy Title
+                  </button>
+                </div>
+                <div style={{ fontSize: "16px", fontWeight: 800, color: "#fff", lineHeight: 1.4, background: "rgba(251, 191, 36, 0.05)", border: "1px dashed rgba(251, 191, 36, 0.3)", padding: "12px 16px", borderRadius: "10px" }}>
+                  {data.title}
+                </div>
+              </div>
+
+              {/* Refined Script */}
+              <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px", padding: "20px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                  <div style={{ fontSize: "14px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <Sparkles size={16} color="#a78bfa" /> Better Video Script
+                  </div>
+                  <button onClick={() => onCopy(data.script?.fullScript)} style={{ background: "none", border: "none", color: "#a78bfa", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 600 }}>
+                    <Copy size={12} /> Copy Script
+                  </button>
+                </div>
+
+                {/* Hook */}
+                {data.script?.hook && (
+                  <div style={{ marginBottom: "16px" }}>
+                    <div style={{ fontSize: "12px", color: "#cbd5e1", fontWeight: 700, marginBottom: "6px" }}>Opening Hook (First 3 seconds):</div>
+                    <div style={{ fontSize: "13px", color: "#cbd5e1", fontStyle: "italic", background: "rgba(124, 58, 237, 0.05)", borderLeft: "3px solid #7c3aed", padding: "10px 14px", borderRadius: "0 8px 8px 0" }}>
+                      "{data.script.hook}"
+                    </div>
+                  </div>
+                )}
+
+                {/* Structure / Outline */}
+                {data.script?.structure?.length > 0 && (
+                  <div style={{ marginBottom: "16px" }}>
+                    <div style={{ fontSize: "12px", color: "#cbd5e1", fontWeight: 700, marginBottom: "8px" }}>Script Structure:</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      {data.script.structure.map((step, i) => (
+                        <div key={i} style={{ fontSize: "12px", color: "#94a3b8", display: "flex", gap: "8px" }}>
+                          <span style={{ color: "#a78bfa", fontWeight: 700 }}>•</span>
+                          <span>{step}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Full Script */}
+                {data.script?.fullScript && (
+                  <div>
+                    <div style={{ fontSize: "12px", color: "#cbd5e1", fontWeight: 700, marginBottom: "8px" }}>Spoken Script (Word-for-Word):</div>
+                    <div style={{ fontSize: "13px", color: "#cbd5e1", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.06)", padding: "16px", borderRadius: "12px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+                      {data.script.fullScript}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Refined Caption */}
+              <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px", padding: "20px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                  <div style={{ fontSize: "14px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <Video size={16} color="#db2777" /> Viral Caption & Description
+                  </div>
+                  <button onClick={() => onCopy(data.caption)} style={{ background: "none", border: "none", color: "#a78bfa", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 600 }}>
+                    <Copy size={12} /> Copy Caption
+                  </button>
+                </div>
+                <div style={{ fontSize: "13px", color: "#cbd5e1", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.06)", padding: "16px", borderRadius: "12px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+                  {data.caption}
+                </div>
+              </div>
+
+              {/* Refined Hashtags */}
+              <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px", padding: "20px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                  <div style={{ fontSize: "14px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <Hash size={16} color="#34d399" /> Best Viral Hashtags
+                  </div>
+                  <button onClick={() => onCopy(data.hashtags.map(h => `#${h}`).join(" "))} style={{ background: "none", border: "none", color: "#a78bfa", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 600 }}>
+                    <Copy size={12} /> Copy All
+                  </button>
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                  {data.hashtags.map((tag, i) => (
+                    <span 
+                      key={i} 
+                      onClick={() => onCopy(`#${tag}`)}
+                      style={{ background: "rgba(52,211,153,0.08)", color: "#34d399", border: "1px solid rgba(52,211,153,0.18)", padding: "6px 14px", borderRadius: "100px", fontSize: "12px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}
+                      title="Click to copy single hashtag"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          ) : (
+            <div style={{ color: "#f87171", textAlign: "center", padding: "40px 0" }}>
+              Something went wrong. Failed to load refined suggestions.
+            </div>
+          )}
+
+        </div>
+      </motion.div>
+      <style>{`
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      `}</style>
+    </div>
+  );
+}
+
