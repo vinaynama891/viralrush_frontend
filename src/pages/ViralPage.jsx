@@ -4,28 +4,15 @@ import {
   Search, SlidersHorizontal, TrendingUp, Music, Hash,
   Play, Heart, MessageCircle, Share2, Bookmark, Eye,
   CheckCircle, Sparkles, Clock, Users, ArrowUpRight,
-  ChevronDown, X, Copy, Zap, Info, ShieldCheck, Video, LayoutGrid
+  ChevronDown, X, Copy, Zap, Info, ShieldCheck, Video, LayoutGrid,
+  Globe, Languages
 } from "lucide-react";
-import api from "../lib/api";
+import api, { getProxiedImage } from "../lib/api";
 
 const Youtube = ({ size = 24, ...props }) => (
   <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
     <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
     <path d="m10 15 5-3-5-3z" />
-  </svg>
-);
-
-const Instagram = ({ size = 24, ...props }) => (
-  <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-  </svg>
-);
-
-const Facebook = ({ size = 24, ...props }) => (
-  <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
   </svg>
 );
 
@@ -50,18 +37,6 @@ const PLATFORMS = [
     platformLabel: "YouTube",
     contentLabel: "Shorts & Videos",
   },
-  {
-    id: "instagram",
-    label: "Instagram",
-    icon: Instagram,
-    color: "#e1306c",
-    gradient: "linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)",
-    glow: "rgba(225, 48, 108, 0.3)",
-    bgTint: "rgba(225, 48, 108, 0.08)",
-    borderTint: "rgba(225, 48, 108, 0.25)",
-    platformLabel: "Instagram",
-    contentLabel: "Reels & Carousels",
-  },
 ];
 
 export default function ViralPage() {
@@ -74,8 +49,6 @@ export default function ViralPage() {
   const [activeAnalysis, setActiveAnalysis] = useState(null);
   const [toast, setToast] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
-  const [playingVideoId, setPlayingVideoId] = useState(null);
-  const [playingVideoTitle, setPlayingVideoTitle] = useState("");
   const [selectedPlatform, setSelectedPlatform] = useState("youtube");
 
   // Refinement states
@@ -95,11 +68,6 @@ export default function ViralPage() {
     contentType: "Shorts",
     verifiedOnly: false
   });
-
-  const playVideo = (videoId, title) => {
-    setPlayingVideoId(videoId);
-    setPlayingVideoTitle(title);
-  };
 
   const showToast = (msg) => {
     setToast(msg);
@@ -194,9 +162,14 @@ export default function ViralPage() {
     }
   };
 
-  const handleRefine = async (item) => {
+  const handleRefineClick = (item) => {
     setSelectedVideoToRefine(item);
     setShowRefineModal(true);
+    setRefineLoading(false);
+    setRefinedData(null);
+  };
+
+  const handleRefine = async (item, targetLanguage = "auto") => {
     setRefineLoading(true);
     setRefinedData(null);
     try {
@@ -205,7 +178,8 @@ export default function ViralPage() {
         title: item.title,
         description: item.caption || item.description,
         platform: selectedPlatform,
-        channelTitle: item.channelTitle || item.creator
+        channelTitle: item.channelTitle || item.creator,
+        targetLanguage: targetLanguage
       });
       if (data.success) {
         setRefinedData(data.refined);
@@ -215,19 +189,46 @@ export default function ViralPage() {
     } catch (err) {
       console.error("Refine error:", err);
       showToast("Error refining content. Using fallback.");
+      
+      const cleanTitle = item.title || "Viral Content";
+      const cleanTopic = cleanTitle.replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDC00-\uDFFF]/g, "").trim();
+      const words = cleanTopic.split(/\s+/).filter(w => w.length > 3 && !["this", "that", "with", "from", "your", "have", "about", "what", "here", "want", "know"].includes(w.toLowerCase()));
+      const keyword1 = words[0] || "this topic";
+      const keyword2 = words[1] || "these strategies";
+      const keyword3 = words[2] || "essential tips";
+
+      let originalScript = `Hey guys, today we are looking at "${cleanTitle}". Here is exactly how we can break this down: ${item.caption || item.description || "Let's dive into the core strategies used in this post."}`;
+      let hook = `Stop scrolling! If you want to know how to actually master "${cleanTopic}", you need to watch this until the end.`;
+      let fullScript = `Stop scrolling! If you want to know how to actually master "${cleanTopic}", you need to watch this until the end. Most people struggle with ${keyword1} because they focus on the wrong approach. Here is the exact fix: First, optimize your ${keyword2}. Second, implement ${keyword3} immediately. Do this for 30 days and watch your metrics explode. If you found this helpful, make sure to follow for more tips and share this with a friend!`;
+      let caption = `Unpopular opinion: Most people are doing "${cleanTopic}" wrong... 😳\n\nIf you've been struggling to see results with ${keyword1}, here's your sign to change your approach. Save this video so you don't forget it, and let me know your thoughts in the comments! 👇\n\n#viral #${keyword1.toLowerCase().replace(/[^a-z0-9]/g, "")} #success #tips`;
+
+      if (targetLanguage === "hindi") {
+        originalScript = `नमस्ते दोस्तों, आज हम देख रहे हैं "${cleanTitle}"। हम इसे इस तरह से समझ सकते हैं...`;
+        hook = `रुकिए! अगर आप "${cleanTopic}" में महारत हासिल करना चाहते हैं, तो इस वीडियो को अंत तक जरूर देखें।`;
+        fullScript = `रुकिए! अगर आप "${cleanTopic}" में महारत हासिल करना चाहते हैं, तो इस वीडियो को अंत तक जरूर देखें। ज्यादातर लोग ${keyword1} में असफल होते हैं क्योंकि वे गलत तरीका अपनाते हैं। आज से आपको केवल एक चीज बदलनी है: ${keyword2} और ${keyword3} पर ध्यान दें। इसे 30 दिनों तक करें और अपने परिणाम देखें। अगर आपको यह मददगार लगा, तो फॉलो करना न भूलें!`;
+        caption = `अलोकप्रिय राय: अधिकांश लोग "${cleanTopic}" को गलत कर रहे हैं... 😳\n\nयदि आप ${keyword1} के साथ परिणाम देखने के लिए संघर्ष कर रहे हैं, तो अपना दृष्टिकोण बदलने का यह सही समय है। इस वीडियो को सेव करें और कमेंट्स में अपने विचार बताएं! 👇\n\n#viral #${keyword1.toLowerCase().replace(/[^a-z0-9]/g, "")} #success #tips`;
+      } else if (targetLanguage === "hinglish") {
+        originalScript = `Hey dosto, aaj hum dekh rahe hai "${cleanTitle}" ke baare me. Isko hum aise samajh sakte hai...`;
+        hook = `Ruko! Agar aap "${cleanTopic}" me master banna chahte ho, to is video ko end tak zaroor dekho.`;
+        fullScript = `Ruko! Agar aap "${cleanTopic}" me master banna chahte ho, to is video ko end tak zaroor dekho. Zyada tar log ${keyword1} me fail hote hai kyunki wo galat approach use karte hai. Aaj से aapko bas ek chiz badalni hai: ${keyword2} aur ${keyword3} par focus karo. Ise 30 dino tak karo aur apna growth dekho. Agar video acchi lagi to follow zaroor karna!`;
+        caption = `Unpopular opinion: Zyada tar log "${cleanTopic}" ko galat kar rahe hai... 😳\n\nKaise laga aapko ye video? Comment karke zaroor bataye aur aisi videos ke liye follow karein! 👇\n\n#viral #${keyword1.toLowerCase().replace(/[^a-z0-9]/g, "")} #success #tips`;
+      }
+
       setRefinedData({
-        title: `🔥 Unlocking the Secret to ${item.title || "Viral Content"}`,
+        originalScript,
+        title: `🔥 Unlocking the Secret to ${cleanTopic}`,
         script: {
-          hook: `Stop scrolling! If you want to know how to master ${item.title || "this niche"}, you need to watch this until the end.`,
+          hook,
           structure: [
-            "1. Hook: Call out the viewer's pain point/desire",
-            "2. The Solution: Give the single most important tip for this niche",
-            "3. Call to Action: Ask the viewer to follow and drop a comment below"
+            `1. Hook: Catch attention on "${cleanTopic}"`,
+            `2. Problem: Why people fail at ${keyword1}`,
+            `3. Solution: Introduce ${keyword2} and ${keyword3}`,
+            "4. Call to Action: Follow and save for later"
           ],
-          fullScript: `Stop scrolling! If you want to know how to master ${item.title || "this niche"}, you need to watch this until the end. Most people get this completely wrong because they focus on the wrong metrics. Here is the one thing you need to change starting today: focus on value, not volume. Do this for 30 days and watch your growth explode. If you found this helpful, make sure to follow for more tips and share this with a friend who needs it!`
+          fullScript
         },
-        caption: `Unpopular opinion: Most people are doing this wrong... 😳\n\nIf you've been struggling to see results with ${item.title || "this niche"}, here's your sign to change your approach. Save this video so you don't forget it, and let me know your thoughts in the comments! 👇\n\n#viral #success #tips`,
-        hashtags: ["viral", "trending", "growth", "strategy", "marketing", "contentcreator", "tips", "hacks"]
+        caption,
+        hashtags: ["viral", "trending", "growth", "strategy", "marketing", "contentcreator", keyword1.toLowerCase().replace(/[^a-z0-9]/g, ""), "tips"]
       });
     } finally {
       setRefineLoading(false);
@@ -264,67 +265,6 @@ export default function ViralPage() {
           <button className="viral-filter-toggle-btn" onClick={() => setShowFilters(!showFilters)} style={{ ...S.glass, padding: "10px 20px", borderRadius: "12px", color: "#fff", display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontWeight: 600 }}>
             <SlidersHorizontal size={16} /> Advanced Filters
           </button>
-        </div>
-
-        {/* PLATFORM SELECTOR */}
-        <div className="viral-platform-selector">
-          {PLATFORMS.map((p) => {
-            const isActive = selectedPlatform === p.id;
-            const Icon = p.icon;
-            return (
-              <motion.button
-                key={p.id}
-                onClick={() => { setSelectedPlatform(p.id); setResults([]); setAiAnalysis(null); setErrorMsg(""); }}
-                whileHover={{ scale: 1.03, y: -2 }}
-                whileTap={{ scale: 0.97 }}
-                className="viral-platform-btn"
-                style={{
-                  border: isActive ? `2px solid ${p.color}` : "2px solid rgba(255,255,255,0.08)",
-                  background: isActive ? p.bgTint : "rgba(19, 20, 28, 0.6)",
-                  backdropFilter: "blur(20px)",
-                  color: isActive ? "#fff" : "#94a3b8",
-                  boxShadow: isActive ? `0 4px 20px ${p.glow}` : "none",
-                }}
-              >
-                {/* Active glow effect */}
-                {isActive && (
-                  <motion.div
-                    layoutId="platformGlow"
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      background: p.gradient,
-                      opacity: 0.12,
-                      borderRadius: "12px",
-                    }}
-                    transition={{ type: "spring", duration: 0.5 }}
-                  />
-                )}
-                <Icon size={20} color={isActive ? p.color : "#64748b"} style={{ position: "relative", zIndex: 1 }} />
-                <span style={{ position: "relative", zIndex: 1 }}>{p.label}</span>
-                {isActive && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    style={{
-                      fontSize: "10px",
-                      fontWeight: 800,
-                      textTransform: "uppercase",
-                      background: p.gradient,
-                      color: "#fff",
-                      padding: "3px 8px",
-                      borderRadius: "6px",
-                      letterSpacing: "0.5px",
-                      position: "relative",
-                      zIndex: 1,
-                    }}
-                  >
-                    {p.contentLabel}
-                  </motion.span>
-                )}
-              </motion.button>
-            );
-          })}
         </div>
 
         {/* STICKY SEARCH BAR */}
@@ -377,7 +317,7 @@ export default function ViralPage() {
                   {[
                     { label: "Sort By", key: "sortBy", opts: ["Most Viral", "Most Viewed", "Highest Engagement", "Fastest Growing"] },
                     { label: "Min Views", key: "minViews", opts: ["10k", "50k", "100k", "1M+"] },
-                    { label: "Content Type", key: "contentType", opts: ["Reels", "Shorts", "TikToks", "Carousels"] }
+                    { label: "Content Type", key: "contentType", opts: ["Shorts", "Long-form", "All"] }
                   ].map(f => (
                     <div key={f.key} style={{ marginBottom: "20px" }}>
                       <label style={{ display: "block", fontSize: "12px", color: "#cbd5e1", marginBottom: "8px", fontWeight: 600 }}>{f.label}</label>
@@ -438,7 +378,7 @@ export default function ViralPage() {
                       window.open(item.videoUrl, "_blank", "noopener,noreferrer");
                     }}
                     selectedPlatform={selectedPlatform}
-                    onRefine={handleRefine}
+                    onRefine={handleRefineClick}
                   />
                 ))}
               </div>
@@ -630,6 +570,7 @@ export default function ViralPage() {
             data={refinedData}
             onClose={() => setShowRefineModal(false)}
             onCopy={copyText}
+            onStartRefine={(lang) => handleRefine(selectedVideoToRefine, lang)}
           />
         )}
       </AnimatePresence>
@@ -754,7 +695,7 @@ function ResultCard({ item, onCopy, rank, onWatch, selectedPlatform, onRefine })
       {/* Media Header */}
       <div style={{ position: "relative", height: "240px", background: "#000" }}>
         <img 
-          src={item.thumbnail && !item.thumbnail.includes("1611162617474") ? item.thumbnail : "/viralrush_logo_placeholder.png"} 
+          src={getProxiedImage(item.thumbnail)} 
           alt="thumbnail" 
           style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.7 }} 
           onError={e => e.target.src="/viralrush_logo_placeholder.png"} 
@@ -888,7 +829,7 @@ function AIAnalysisModal({ item, aiAnalysis, onClose, onCopy, onWatch, selectedP
             onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }}
           >
             <img 
-              src={item.thumbnail && !item.thumbnail.includes("1611162617474") ? item.thumbnail : "/viralrush_logo_placeholder.png"} 
+              src={getProxiedImage(item.thumbnail)} 
               alt="thumb" 
               style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.8 }} 
               onError={e => e.target.src="/viralrush_logo_placeholder.png"} 
@@ -1039,7 +980,9 @@ function SectionCard({ icon, title, text }) {
 }
 
 // AI Content Refinement Modal
-function RefineContentModal({ item, loading, data, onClose, onCopy }) {
+function RefineContentModal({ item, loading, data, onClose, onCopy, onStartRefine }) {
+  const [selectedLang, setSelectedLang] = useState("auto");
+
   if (!item) return null;
 
   return (
@@ -1084,7 +1027,7 @@ function RefineContentModal({ item, loading, data, onClose, onCopy }) {
           {/* Original video info summary */}
           <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: "14px", padding: "16px", marginBottom: "24px", border: "1px solid rgba(255,255,255,0.05)", display: "flex", gap: "16px", alignItems: "center" }}>
             <img 
-              src={item.thumbnail && !item.thumbnail.includes("1611162617474") ? item.thumbnail : "/viralrush_logo_placeholder.png"} 
+              src={getProxiedImage(item.thumbnail)} 
               alt="thumb" 
               style={{ width: "80px", height: "50px", objectFit: "cover", borderRadius: "6px" }}
               onError={e => e.target.src="/viralrush_logo_placeholder.png"}
@@ -1096,7 +1039,74 @@ function RefineContentModal({ item, loading, data, onClose, onCopy }) {
             </div>
           </div>
 
-          {loading ? (
+          {!data && !loading ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px", marginTop: "12px" }}>
+              <div style={{ fontSize: "15px", color: "#cbd5e1", fontWeight: 700 }}>Choose Target Script Language:</div>
+              
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px" }}>
+                {[
+                  { id: "auto", name: "Auto-Detect", desc: "Same language as original video", icon: <Sparkles size={18} color="#a78bfa" /> },
+                  { id: "english", name: "English", desc: "Script entirely in English", icon: <Globe size={18} color="#3b82f6" /> },
+                  { id: "hindi", name: "Hindi (हिंदी)", desc: "शुद्ध हिंदी देवनागरी लिपि में", icon: <Languages size={18} color="#ef4444" /> },
+                  { id: "hinglish", name: "Hinglish", desc: "Hindi written in English text", icon: <MessageCircle size={18} color="#10b981" /> }
+                ].map(lang => {
+                  const isSelected = selectedLang === lang.id;
+                  return (
+                    <button
+                      key={lang.id}
+                      onClick={() => setSelectedLang(lang.id)}
+                      style={{
+                        background: isSelected ? "rgba(124, 58, 237, 0.12)" : "rgba(255,255,255,0.02)",
+                        border: isSelected ? "2px solid #7c3aed" : "1px solid rgba(255,255,255,0.05)",
+                        borderRadius: "16px",
+                        padding: "16px",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "8px",
+                        outline: "none"
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 700, color: isSelected ? "#a78bfa" : "#fff" }}>
+                        {lang.icon}
+                        {lang.name}
+                      </div>
+                      <div style={{ fontSize: "11px", color: "#64748b", lineHeight: 1.4 }}>
+                        {lang.desc}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => onStartRefine(selectedLang)}
+                style={{
+                  background: "linear-gradient(135deg, #7c3aed, #db2777)",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "14px",
+                  padding: "16px 24px",
+                  fontSize: "14px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  boxShadow: "0 4px 15px rgba(124, 58, 237, 0.3)",
+                  transition: "all 0.2s ease",
+                  marginTop: "16px"
+                }}
+                onMouseEnter={e => e.currentTarget.style.transform = "translateY(-1px)"}
+                onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+              >
+                <Sparkles size={16} /> Start AI Refinement
+              </button>
+            </div>
+          ) : loading ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 0", gap: "16px" }}>
               <div style={{ width: "40px", height: "40px", border: "4px solid rgba(167, 139, 250, 0.2)", borderTop: "4px solid #a78bfa", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
               <div style={{ color: "#94a3b8", fontSize: "14px", fontWeight: 600 }}>Analyzing video data and generating viral script suggestions...</div>
@@ -1119,26 +1129,83 @@ function RefineContentModal({ item, loading, data, onClose, onCopy }) {
                 </div>
               </div>
 
+
+
               {/* Refined Script */}
               <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px", padding: "20px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
                   <div style={{ fontSize: "14px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
-                    <Sparkles size={16} color="#a78bfa" /> Better Video Script
+                    <Sparkles size={16} color="#a78bfa" /> Better Refined Script
                   </div>
                   <button onClick={() => onCopy(data.script?.fullScript)} style={{ background: "none", border: "none", color: "#a78bfa", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 600 }}>
-                    <Copy size={12} /> Copy Script
+                    <Copy size={12} /> Copy Refined Script
                   </button>
                 </div>
 
                 {/* Hook */}
-                {data.script?.hook && (
+                {data.script?.hooks && data.script.hooks.length > 0 ? (
+                  <div style={{ marginBottom: "18px" }}>
+                    <div style={{ fontSize: "12px", color: "#cbd5e1", fontWeight: 700, marginBottom: "10px" }}>Opening Hook Variations (3 Styles):</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                      {data.script.hooks.map((hk, idx) => (
+                        <div 
+                          key={idx} 
+                          style={{ 
+                            background: "rgba(124, 58, 237, 0.03)", 
+                            border: "1px solid rgba(124, 58, 237, 0.15)", 
+                            borderRadius: "12px", 
+                            padding: "12px 16px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "6px"
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ 
+                              fontSize: "10px", 
+                              fontWeight: 800, 
+                              textTransform: "uppercase", 
+                              color: idx === 0 ? "#60a5fa" : idx === 1 ? "#f472b6" : "#34d399",
+                              background: idx === 0 ? "rgba(96, 165, 250, 0.1)" : idx === 1 ? "rgba(244, 114, 182, 0.1)" : "rgba(52, 211, 153, 0.1)",
+                              padding: "2px 8px",
+                              borderRadius: "6px"
+                            }}>
+                              {hk.type || `Variation ${idx + 1}`}
+                            </span>
+                            <button 
+                              onClick={() => onCopy(hk.text)} 
+                              style={{ 
+                                background: "none", 
+                                border: "none", 
+                                color: "#a78bfa", 
+                                cursor: "pointer", 
+                                display: "flex", 
+                                alignItems: "center", 
+                                gap: "4px", 
+                                fontSize: "11px", 
+                                fontWeight: 600,
+                                padding: "4px 8px",
+                                borderRadius: "4px"
+                              }}
+                            >
+                              <Copy size={11} /> Copy Hook
+                            </button>
+                          </div>
+                          <div style={{ fontSize: "13px", color: "#cbd5e1", fontStyle: "italic", lineHeight: "1.4" }}>
+                            "{hk.text}"
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : data.script?.hook ? (
                   <div style={{ marginBottom: "16px" }}>
                     <div style={{ fontSize: "12px", color: "#cbd5e1", fontWeight: 700, marginBottom: "6px" }}>Opening Hook (First 3 seconds):</div>
                     <div style={{ fontSize: "13px", color: "#cbd5e1", fontStyle: "italic", background: "rgba(124, 58, 237, 0.05)", borderLeft: "3px solid #7c3aed", padding: "10px 14px", borderRadius: "0 8px 8px 0" }}>
                       "{data.script.hook}"
                     </div>
                   </div>
-                )}
+                ) : null}
 
                 {/* Structure / Outline */}
                 {data.script?.structure?.length > 0 && (

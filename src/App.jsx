@@ -24,15 +24,16 @@ import AdminDashboardPage from "@/pages/AdminDashboardPage";
 import YoutubeDashboardPage from "@/pages/YoutubeDashboardPage";
 import ManageVideosPage from "@/pages/ManageVideosPage";
 import CreatePostPage from "@/pages/CreatePostPage";
+import SafeViralTrendPage from "@/pages/SafeViralTrendPage";
 
 const sections = [
   { key: "dashboard", label: "Dashboard" },
   { key: "create_post", label: "Create Post" },
   { key: "youtube", label: "YouTube Studio" },
   { key: "viral", label: "Viral Content Finder" },
+  { key: "safe_trends", label: "Safe Trends Pipeline" },
   { key: "script", label: "AI Script Generator" },
   { key: "caption", label: "Caption + Hashtags" },
-  { key: "automation", label: "DM Automation" },
   { key: "calendar", label: "Content Calendar" },
   { key: "analytics", label: "Analytics" },
   { key: "academy", label: "Creator Academy" },
@@ -75,7 +76,9 @@ function AppInner() {
     try {
       const calls = [
         api.get("/features/dashboard/stats"),
+        api.get("/features/viral-content"),
         api.get("/features/automation"),
+        api.get("/features/brand-deals"),
         api.get("/features/community/posts"),
         api.get("/features/calendar"),
         api.get("/features/analytics"),
@@ -83,25 +86,17 @@ function AppInner() {
         api.get("/features/reports"),
         api.get("/features/tools-marketplace"),
         api.get("/features/notifications"),
+        api.get("/features/faceless-ideas"),
         api.get("/features/platform-metrics"),
       ];
       const results = await Promise.allSettled(calls);
       const get = (r) => (r.status === "fulfilled" ? r.value.data : null);
-      const [
-        dashboard,
-        automation,
-        posts,
-        calendar,
-        analytics,
-        academy,
-        reports,
-        tools,
-        notifications,
-        platformMetrics
-      ] = results;
+      const [dashboard, viral, automation, deals, posts, calendar, analytics, academy, reports, tools, notifications, faceless, platformMetrics] = results;
       setState({
         dashboard: get(dashboard),
+        viral: get(viral),
         automation: get(automation),
+        deals: get(deals),
         posts: get(posts),
         calendar: get(calendar),
         analytics: get(analytics),
@@ -109,6 +104,7 @@ function AppInner() {
         reports: get(reports),
         tools: get(tools),
         notifications: get(notifications),
+        faceless: get(faceless),
         platformMetrics: get(platformMetrics),
       });
     } catch (err) {
@@ -116,55 +112,9 @@ function AppInner() {
     }
   };
 
-
-
   useEffect(() => {
     if (user) load();
-    const handleGlobalNav = (e) => {
-      if (e.detail) {
-        setActiveSection(e.detail);
-      }
-    };
-    window.addEventListener("viralrush_navigate", handleGlobalNav);
-    return () => {
-      window.removeEventListener("viralrush_navigate", handleGlobalNav);
-    };
   }, [user]);
-
-  useEffect(() => {
-    if (!user) return;
-    
-    // Heartbeat every 30 seconds
-    const interval = setInterval(async () => {
-      if (document.visibilityState === "visible" && document.hasFocus()) {
-        try {
-          await api.post("/features/reports/heartbeat", { seconds: 30 });
-        } catch (err) {
-          console.error("Failed to send active usage heartbeat:", err);
-        }
-      }
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [user]);
-
-  useEffect(() => {
-    if (loading) return;
-    const params = new URLSearchParams(window.location.search);
-    const path = window.location.pathname;
-    const success = params.get("success");
-    const error = params.get("error");
-    const igConnected = params.get("instagram_connected");
-    
-    if (success || error || igConnected || path.includes("/connect") || path.includes("/youtube")) {
-      setView("app");
-      if (path.includes("/youtube") || params.get("youtube")) {
-        setActiveSection("youtube");
-      } else {
-        setActiveSection("connect");
-      }
-    }
-  }, [loading]);
 
   const chartData = useMemo(() => {
     if (!state.analytics) return [];
@@ -364,9 +314,52 @@ function AppInner() {
     await load();
   };
 
+  const applyDeal = async (deal) => {
+    await api.post("/features/brand-deals/apply", {
+      dealId: deal.id,
+      brandName: deal.brandName,
+      offerTitle: deal.offerTitle,
+      pitch: "I can deliver 3 high-retention reels.",
+    });
+    if (deal.careerUrl && typeof window !== "undefined") {
+      window.open(deal.careerUrl, "_blank", "noopener,noreferrer");
+    }
+    await load();
+  };
+
+  const suggestDealsByNiche = async () => {
+    if (!dealSearchNiche.trim()) {
+      setDealSuggestLabel("Please enter a niche to get AI suggestions.");
+      return;
+    }
+    try {
+      setDealSuggestLoading(true);
+      setDealSuggestLabel("");
+      const res = await api.get(`/features/brand-deals/suggest?niche=${encodeURIComponent(dealSearchNiche)}`);
+      setState((prev) => ({ ...prev, deals: res.data.suggestions }));
+      setDealSuggestLabel(`AI suggestions for "${res.data.niche}" (${res.data.source}) - ${res.data.note}`);
+    } catch (error) {
+      setDealSuggestLabel(error?.response?.data?.message || "Could not fetch AI suggestions right now.");
+    } finally {
+      setDealSuggestLoading(false);
+    }
+  };
+
   const createNotification = async () => {
     await api.post("/features/notifications", { message: "Schedule tomorrow's content batch.", remindAt: new Date() });
     await load();
+  };
+
+  const generateAgreement = async () => {
+    const res = await api.post("/features/collab-agreement", {
+      creatorName: user?.name || "Creator",
+      brandName: "Brand X",
+      deliverables: "2 reels + 1 story set",
+      payment: "$1,000",
+    });
+    const doc = new jsPDF();
+    doc.text(res.data.agreementText, 10, 10);
+    doc.save("viralrush-collab-agreement.pdf");
   };
 
   const sectionPages = {
@@ -375,6 +368,7 @@ function AppInner() {
     youtube: <YoutubeDashboardPage />,
     managevideos: <ManageVideosPage onBack={() => setActiveSection("dashboard")} />,
     viral: <ViralPage />,
+    safe_trends: <SafeViralTrendPage />,
     connect: <ConnectChannelPage />,
     script: <ScriptPage generatedScript={state.generatedScript} onGenerate={createScript} onAnalyzeVideo={analyzeVideoScript} onEnhancePrompt={enhancePrompt} onFetchQuestions={fetchScriptQuestions} onEnhanceScript={enhanceScript} />,
     caption: <CaptionPage generatedCaption={state.generatedCaption} onGenerate={createCaption} />,
@@ -417,7 +411,7 @@ function AppInner() {
       color:"#fff",borderRadius:12,padding:"14px 22px",
       fontWeight:600,fontSize:14,boxShadow:"0 8px 32px rgba(0,0,0,0.4)",
       cursor:"pointer",animation:"slideIn 0.3s ease"
-    }} onClick={()=>{setCommunityToast(null);setActiveSection("search");}}>
+    }} onClick={()=>{setCommunityToast(null);setActiveSection("chat");}}>
       {communityToast.text} {communityToast.communityId && "— Click to open chat"}
     </div>
   );
@@ -514,14 +508,14 @@ function AppInner() {
   const NAV_ITEMS = [
     { key: "dashboard",     label: "Dashboard",     svgIcon: I(<><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></>) },
     { key: "viral",         label: "Viral Finder",  svgIcon: I(<><path d="M13 10V3L4 14h7v7l9-11h-7z"/></>) },
+    { key: "safe_trends",   label: "Safe Trends",   svgIcon: I(<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></>) },
     { key: "script",        label: "AI Script",     svgIcon: I(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>) },
     { key: "caption",       label: "Captions",      svgIcon: I(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></>) },
-    { key: "automation",    label: "DM Automation", disabled: true, svgIcon: I(<><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></>) },
     { key: "calendar",      label: "Calendar",      svgIcon: I(<><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>) },
     { key: "analytics",     label: "Analytics",     svgIcon: I(<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>) },
   ];
 
-  const LIVE_KEYS = new Set(["dashboard", "connect", "script", "calendar", "notifications", "youtube", "caption", "managevideos", "create_post", "viral", "automation", "analytics"]);
+  const LIVE_KEYS = new Set(["dashboard", "connect", "script", "calendar", "notifications", "youtube", "caption", "managevideos", "create_post", "viral", "analytics", "safe_trends"]);
   const handleNavClick = (key) => {
     if (LIVE_KEYS.has(key)) {
       setActiveSection(key);
@@ -660,28 +654,25 @@ function AppInner() {
         <nav style={{ flex: 1, padding: "6px 8px", display: "flex", flexDirection: "column", gap: 2 }}>
           {NAV_ITEMS.map(item => {
             const isActive = activeSection === item.key;
-            const isDisabled = item.disabled;
             return (
               <button
                 key={item.key}
-                className={isDisabled ? "" : "snav-btn"}
+                className="snav-btn"
                 onClick={() => handleNavClick(item.key)}
-                disabled={isDisabled}
                 style={{
                   width: "100%", display: "flex", alignItems: "center", gap: 11,
                   padding: "9px 12px", borderRadius: 9,
                   background: isActive ? "rgba(91,46,255,0.14)" : "transparent",
                   border: isActive ? "1px solid rgba(91,46,255,0.3)" : "1px solid transparent",
-                  color: isDisabled ? "rgba(255,255,255,0.2)" : (isActive ? "#a78bfa" : "rgba(255,255,255,0.5)"),
-                  cursor: isDisabled ? "not-allowed" : "pointer", fontSize: 12.5,
+                  color: isActive ? "#a78bfa" : "rgba(255,255,255,0.5)",
+                  cursor: "pointer", fontSize: 12.5,
                   fontWeight: isActive ? 700 : 400,
                   fontFamily: "var(--font-ui)", textAlign: "left",
                   boxShadow: isActive ? "0 2px 10px rgba(91,46,255,0.12)" : "none",
                   transition: "all 0.18s",
-                  opacity: isDisabled ? 0.45 : 1,
                 }}
               >
-                <span style={{ width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, opacity: isDisabled ? 0.25 : (isActive ? 1 : 0.65) }}>
+                <span style={{ width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, opacity: isActive ? 1 : 0.65 }}>
                   {item.svgIcon}
                 </span>
                 <span style={{ flex: 1 }}>{item.label}</span>

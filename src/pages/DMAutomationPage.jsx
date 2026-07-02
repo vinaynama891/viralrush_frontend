@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import api from "@/lib/api";
+import api, { getProxiedImage } from "@/lib/api";
 import { useSocket } from "@/context/SocketContext";
 
 export default function DMAutomationPage() {
@@ -624,7 +624,7 @@ export default function DMAutomationPage() {
                   </div>
                   {posts.map(post => (
                     <div key={post.id} className={`post-selector-card ${formPostId === post.id ? "active" : ""}`} onClick={() => handleSelectPost(post)}>
-                      <img src={post.thumbnail_url || post.media_url} alt="Instagram Media" />
+                      <img src={getProxiedImage(post.thumbnail_url || post.media_url)} alt="Instagram Media" />
                     </div>
                   ))}
                 </div>

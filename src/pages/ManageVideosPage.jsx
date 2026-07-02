@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import api from "@/lib/api";
+import api, { getProxiedImage } from "@/lib/api";
 
 const fmt = (n) => {
   const num = parseInt(n) || 0;
@@ -313,7 +313,7 @@ function MediaCard({ item, idx, onClick }) {
       onClick={onClick}
     >
       {thumb ? (
-        <img src={thumb} alt={item.caption?.slice(0, 60) || "Post"} loading="lazy" />
+        <img src={getProxiedImage(thumb)} alt={item.caption?.slice(0, 60) || "Post"} loading="lazy" />
       ) : (
         <div style={{ width:"100%", height:"100%", display:"flex", alignItems:"center", justifyContent:"center", background:"#1e1e1e", fontSize:32 }}>
           {TYPE_ICON[item.media_type] || "🖼️"}

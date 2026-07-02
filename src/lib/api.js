@@ -15,4 +15,16 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+export const getProxiedImage = (url) => {
+  if (!url || url.includes("1611162617474")) {
+    return "/viralrush_logo_placeholder.png";
+  }
+  // If it's an Instagram cdn or facebook cdn URL, proxy it to bypass CORS/hotlinking
+  if (url.includes("cdninstagram.com") || url.includes("fbcdn.net")) {
+    const baseURL = api.defaults.baseURL || "http://localhost:5000/api";
+    return `${baseURL}/instagram/proxy-image?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+};
+
 export default api;
