@@ -42,6 +42,7 @@ const PLATFORMS = [
 export default function ViralPage() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showLoader, setShowLoader] = useState(false);
   const [results, setResults] = useState([]);
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [insights, setInsights] = useState({ niches: [], hashtags: [], audio: [] });
@@ -101,6 +102,7 @@ export default function ViralPage() {
       showToast("Please enter a keyword to search!");
       return;
     }
+    setShowLoader(true);
     setLoading(true);
     setErrorMsg("");
     setResults([]);
@@ -559,6 +561,160 @@ export default function ViralPage() {
             padding: 24px 16px;
           }
         }
+
+        /* Viral Loader Styles */
+        .viral-loader-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background-color: #000000;
+          z-index: 99999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          box-sizing: border-box;
+          overflow: hidden;
+        }
+
+        .viral-loader-overlay::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.45) 50%);
+          background-size: 100% 4px;
+          z-index: 10;
+          pointer-events: none;
+          opacity: 0.8;
+        }
+
+        .viral-loader-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          max-width: 700px;
+          background: transparent;
+          position: relative;
+          z-index: 20;
+          padding: 40px;
+          box-sizing: border-box;
+        }
+
+        .viral-loader-content {
+          position: relative;
+          z-index: 2;
+          width: 100%;
+          max-width: 650px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .viral-loader-subtitle {
+          font-size: 14px;
+          font-weight: 500;
+          color: #94a3b8;
+          letter-spacing: 0.6em;
+          text-transform: uppercase;
+          margin-bottom: 8px;
+          text-align: center;
+          opacity: 0.8;
+        }
+
+        .viral-loader-title {
+          font-size: 84px;
+          font-weight: 800;
+          letter-spacing: -2px;
+          text-transform: uppercase;
+          margin: 0 0 30px 0;
+          line-height: 1;
+          text-align: center;
+        }
+
+        .viral-loader-bar-row {
+          display: flex;
+          align-items: center;
+          width: 100%;
+          margin-bottom: 12px;
+        }
+
+        .viral-loader-bracket {
+          color: rgba(255, 255, 255, 0.2);
+          font-size: 32px;
+          font-family: system-ui, sans-serif;
+          font-weight: 200;
+          user-select: none;
+          line-height: 1;
+        }
+
+        .viral-loader-track-container {
+          flex: 1;
+          margin: 0 16px;
+          display: flex;
+          align-items: center;
+        }
+
+        .viral-loader-track {
+          position: relative;
+          width: 100%;
+          height: 4px;
+          background: rgba(255, 255, 255, 0.06);
+          border-radius: 2px;
+        }
+
+        .viral-loader-fill {
+          position: absolute;
+          left: 0;
+          top: 0;
+          height: 100%;
+          background: linear-gradient(90deg, #7c3aed, #ec4899, #f97316);
+          border-radius: 2px;
+          transition: width 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 0 10px rgba(236, 72, 153, 0.4);
+        }
+
+        .viral-loader-glow-dot {
+          position: absolute;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          width: 10px;
+          height: 10px;
+          background: #ffffff;
+          border-radius: 50%;
+          box-shadow: 0 0 12px 4px rgba(255, 255, 255, 0.8), 0 0 8px rgba(236, 72, 153, 0.8);
+          transition: left 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .viral-loader-meta {
+          display: flex;
+          justify-content: space-between;
+          width: 100%;
+          padding: 0 18px;
+          box-sizing: border-box;
+        }
+
+        .viral-loader-status {
+          font-size: 11px;
+          letter-spacing: 0.15em;
+          color: #64748b;
+          font-family: 'Courier New', Courier, monospace;
+          text-transform: uppercase;
+          font-weight: bold;
+        }
+
+        .viral-loader-percentage {
+          font-size: 16px;
+          font-weight: 700;
+          color: #ff8b3d;
+          font-family: 'Courier New', Courier, monospace;
+        }
       `}</style>
 
       {/* Refine Content Modal */}
@@ -574,11 +730,157 @@ export default function ViralPage() {
           />
         )}
       </AnimatePresence>
+
+      {/* Full-screen Loading Overlay */}
+      <AnimatePresence>
+        {showLoader && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="viral-loader-overlay"
+          >
+            <ViralLoader isDone={!loading} onComplete={() => setShowLoader(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
 // Subcomponents
+
+function ViralLoader({ isDone, onComplete }) {
+  const [progress, setProgress] = useState(0);
+  const [statusText, setStatusText] = useState("CALIBRATING VIRALITY ENGINE");
+
+  useEffect(() => {
+    const tickTime = isDone ? 50 : 150;
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 99 && !isDone) {
+          return 99; // Hold at 99% until API is done
+        }
+        if (prev >= 100) {
+          clearInterval(interval);
+          if (onComplete) onComplete();
+          return 100;
+        }
+        const increment = isDone 
+          ? Math.floor(Math.random() * 12) + 8 // 8% to 20%
+          : Math.floor(Math.random() * 2) + 1; // 1% to 2%
+        
+        const next = prev + increment;
+        return next >= 100 ? 100 : next;
+      });
+    }, tickTime);
+
+    return () => clearInterval(interval);
+  }, [isDone, onComplete]);
+
+  useEffect(() => {
+    // Status text cycling
+    const statuses = [
+      "CALIBRATING VIRALITY ENGINE",
+      "SCANNING TRENDING NICHE DATABASES",
+      "FETCHING ENGAGEMENT METRICS",
+      "EXTRACTING HIGHEST PERFORMING HOOKS",
+      "DETERMINING VELOCITY FACTOR",
+      "OPTIMIZING RECOMMENDATION SIGNAL",
+      "GENERATING COGNITIVE INSIGHTS"
+    ];
+    let currentIndex = 0;
+    const statusInterval = setInterval(() => {
+      currentIndex = (currentIndex + 1) % statuses.length;
+      setStatusText(statuses[currentIndex]);
+    }, 1200);
+
+    return () => clearInterval(statusInterval);
+  }, []);
+
+  const getTitleStyle = (pct) => {
+    if (pct < 30) {
+      return {
+        text: "VIRAL",
+        gradient: "linear-gradient(90deg, #7c3aed, #ec4899, #f97316)",
+        glow: "rgba(236, 72, 153, 0.15)",
+        fontSize: "84px"
+      };
+    }
+    if (pct < 60) {
+      return {
+        text: "CONTENT",
+        gradient: "linear-gradient(90deg, #06b6d4, #3b82f6, #8b5cf6)",
+        glow: "rgba(59, 130, 246, 0.15)",
+        fontSize: "84px"
+      };
+    }
+    if (pct < 85) {
+      return {
+        text: "FINDER",
+        gradient: "linear-gradient(90deg, #10b981, #14b8a6, #06b6d4)",
+        glow: "rgba(20, 184, 166, 0.15)",
+        fontSize: "84px"
+      };
+    }
+    return {
+      text: "VIRAL CONTENT FINDER",
+      gradient: "linear-gradient(90deg, #7c3aed, #ec4899, #f97316, #06b6d4, #10b981)",
+      glow: "rgba(236, 72, 153, 0.25)",
+      fontSize: "48px"
+    };
+  };
+
+  const { text: titleText, gradient: titleGradient, glow: titleGlow, fontSize: titleFontSize } = getTitleStyle(progress);
+
+  return (
+    <div className="viral-loader-container">
+      <div className="viral-loader-content">
+        <div className="viral-loader-subtitle">LET'S GO</div>
+        
+        <motion.h1 
+          key={titleText}
+          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="viral-loader-title"
+          style={{
+            background: titleGradient,
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            filter: `drop-shadow(0 0 30px ${titleGlow})`,
+            fontSize: titleFontSize
+          }}
+        >
+          {titleText}
+        </motion.h1>
+        
+        <div className="viral-loader-bar-row">
+          <span className="viral-loader-bracket">[</span>
+          <div className="viral-loader-track-container">
+            <div className="viral-loader-track">
+              <div 
+                className="viral-loader-fill" 
+                style={{ width: `${progress}%` }}
+              />
+              <div 
+                className="viral-loader-glow-dot" 
+                style={{ left: `${progress}%` }}
+              />
+            </div>
+          </div>
+          <span className="viral-loader-bracket">]</span>
+        </div>
+
+        <div className="viral-loader-meta">
+          <div className="viral-loader-status">{statusText}</div>
+          <div className="viral-loader-percentage">{progress}%</div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function TrendCard({ title, icon, items, dataKey, valueKey }) {
   return (

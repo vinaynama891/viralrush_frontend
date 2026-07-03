@@ -8,6 +8,36 @@ import {
 } from "lucide-react";
 import api from "../lib/api";
 
+const InstagramIcon = ({ size = 20 }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ background: "linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)", padding: "3px", borderRadius: "6px", color: "#fff" }}>
+    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+  </svg>
+);
+
+const RedditIcon = ({ size = 20 }) => (
+  <svg viewBox="0 0 20 20" width={size} height={size} fill="#FF4500" style={{ background: "rgba(255, 69, 0, 0.1)", padding: "3px", borderRadius: "6px" }}>
+    <path d="M17.15 8.93c-.47 0-.88.2-1.18.52a8.55 8.55 0 00-4.63-1.42l.98-3.08 3.2.68c.03.74.64 1.34 1.4 1.34.77 0 1.4-.63 1.4-1.4a1.4 1.4 0 00-2.22-1.12l-3.52-.75a.47.47 0 00-.54.34l-1.09 3.44a8.6 8.6 0 00-4.7 1.42c-.3-.32-.71-.52-1.18-.52-.92 0-1.67.75-1.67 1.67 0 .64.36 1.2.9 1.48-.04.22-.06.44-.06.67 0 2.8 3.5 5.08 7.82 5.08s7.82-2.28 7.82-5.08c0-.23-.02-.45-.06-.67.54-.28.9-.84.9-1.48 0-.92-.75-1.67-1.67-1.67zm-10 2.5a1.25 1.25 0 112.5 0 1.25 1.25 0 01-2.5 0zm6.57 3.5a4.7 4.7 0 01-7.44 0 .31.31 0 01.44-.45 4.07 4.07 0 006.56 0 .31.31 0 01.44.45zm-.82-2.25c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25c.69 0 1.25.56 1.25 1.25s-.56 1.25-1.25 1.25z"/>
+  </svg>
+);
+
+const GoogleIcon = ({ size = 20 }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} style={{ background: "rgba(255,255,255,0.08)", padding: "3px", borderRadius: "6px" }}>
+    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.85z"/>
+    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.85c.87-2.6 3.3-4.53 6.16-4.53z"/>
+  </svg>
+);
+
+const AllIcon = ({ size = 20 }) => (
+  <div style={{ display: "flex", gap: "2px", alignItems: "center" }}>
+    <RedditIcon size={size - 2} />
+    <GoogleIcon size={size - 2} />
+  </div>
+);
+
 const S = {
   glass: {
     background: "rgba(19, 20, 28, 0.6)",
@@ -80,6 +110,9 @@ export default function SafeViralTrendPage() {
   const [history, setHistory] = useState([]);
   const [errorMsg, setErrorMsg] = useState("");
   const [instagramWarning, setInstagramWarning] = useState("");
+  const [timeLeft, setTimeLeft] = useState("08:29:38");
+  
+
   
   // Instagram connection state
   const [igConnected, setIgConnected] = useState(false);
@@ -151,6 +184,24 @@ export default function SafeViralTrendPage() {
 
   useEffect(() => {
     loadInitialData();
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date();
+      const target = new Date();
+      target.setHours(24, 0, 0, 0); // target is midnight
+      const diff = target - now;
+      if (diff <= 0) {
+        setTimeLeft("00:00:00");
+      } else {
+        const hours = String(Math.floor((diff / (1000 * 60 * 60)) % 24)).padStart(2, '0');
+        const minutes = String(Math.floor((diff / (1000 * 60)) % 60)).padStart(2, '0');
+        const seconds = String(Math.floor((diff / 1000) % 60)).padStart(2, '0');
+        setTimeLeft(`${hours}:${minutes}:${seconds}`);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const handlePlatformToggle = (plat) => {
@@ -315,89 +366,209 @@ export default function SafeViralTrendPage() {
         )}
       </AnimatePresence>
 
-      {/* HEADER SECTION - Matching original styling */}
-      <div className="viral-header">
-        <div className="viral-header-text">
-          <h1 className="viral-title">
-            Discover <span style={S.gradientText}>Safe Trends</span>
-          </h1>
-          <p className="viral-subtitle">Identify hot compliant signals from Reddit, Google News, and allowed Instagram Graph API nodes.</p>
+      {/* HEADER SECTION - Centered like the screenshot */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", marginBottom: "32px", width: "100%" }}>
+        {/* Connect Profile button positioned at top right */}
+        <div className="viral-filter-toggle-btn" style={{ position: "absolute", top: 0, right: 0 }}>
+          <button
+            onClick={handleConnectInstagram}
+            disabled={connectingIg}
+            style={{ ...S.glass, padding: "10px 20px", borderRadius: "12px", color: "#fff", display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontWeight: 600 }}
+          >
+            <ShieldCheck size={16} color={igConnected ? "#34d399" : "#a78bfa"} />
+            {igConnected ? `Connected: @${igProfile?.username || "Business"}` : "Connect Profile"}
+          </button>
         </div>
 
-        {/* IG Connection button styled as "Advanced Filters" */}
-        <button
-          className="viral-filter-toggle-btn"
-          onClick={handleConnectInstagram}
-          disabled={connectingIg}
-          style={{ ...S.glass, padding: "10px 20px", borderRadius: "12px", color: "#fff", display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontWeight: 600 }}
-        >
-          <ShieldCheck size={16} color={igConnected ? "#34d399" : "#a78bfa"} />
-          {igConnected ? `Connected: @${igProfile?.username || "Business"}` : "Connect Profile"}
-        </button>
+        <div style={{ textAlign: "center", marginTop: "24px" }}>
+          <h1 style={{ fontSize: "48px", fontWeight: 900, letterSpacing: "-1.5px", margin: "0 0 12px 0", color: "#fff" }}>
+            Discover <span style={{ background: "linear-gradient(90deg, #ec4899, #f97316)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Viral</span> Content Ideas
+          </h1>
+          <p style={{ color: "#94a3b8", fontSize: "16px", margin: 0, fontWeight: 500 }}>
+            Find scroll-stopping content ideas in seconds
+          </p>
+        </div>
       </div>
 
-      {/* STICKY SEARCH BAR - Matching original styling */}
-      <div className="viral-search-bar" style={{ ...S.glass, position: "sticky", zIndex: 100, borderRadius: "16px", boxShadow: "0 10px 40px rgba(0,0,0,0.5)" }}>
-        <div className="viral-search-input-wrapper">
-          <Search size={18} color="#64748b" style={{ flexShrink: 0 }} />
-          <input
-            value={platforms.includes("instagram") && platforms.length === 1 ? "Connected Instagram Account (No search query required)" : niche}
-            onChange={(e) => setNiche(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && !platforms.includes("instagram") && handleSearch()}
-            placeholder="Search keywords, creators, or niches..."
-            disabled={platforms.includes("instagram") && platforms.length === 1}
-            style={{ 
-              ...S.input, 
-              background: "transparent", 
-              border: "none", 
-              padding: "14px 0", 
-              width: "100%", 
-              fontSize: "15px", 
-              color: (platforms.includes("instagram") && platforms.length === 1) ? "var(--muted-color)" : "#fff",
-              cursor: (platforms.includes("instagram") && platforms.length === 1) ? "not-allowed" : "text"
-            }}
-          />
+      {/* SAFE TRENDS SEARCH & PLATFORM CONTAINER */}
+      <div 
+        style={{ 
+          ...S.glass, 
+          borderRadius: "24px", 
+          padding: "32px", 
+          marginBottom: "40px", 
+          boxShadow: "0 20px 50px rgba(0,0,0,0.6)",
+          background: "rgba(10, 11, 18, 0.75)"
+        }}
+      >
+        {/* Platforms Toggle Row */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", marginBottom: "24px" }}>
+          {[
+            {
+              id: "reddit+google",
+              label: "Reddit + Google",
+              icon: <AllIcon size={18} />,
+              active: platforms.includes("reddit") && platforms.includes("google") && platforms.length === 2
+            },
+            {
+              id: "reddit",
+              label: "Reddit",
+              icon: <RedditIcon size={18} />,
+              active: platforms.includes("reddit") && platforms.length === 1
+            },
+            {
+              id: "google",
+              label: "Google",
+              icon: <GoogleIcon size={18} />,
+              active: platforms.includes("google") && platforms.length === 1
+            },
+            {
+              id: "instagram",
+              label: "Instagram",
+              icon: <InstagramIcon size={18} />,
+              active: platforms.includes("instagram") && platforms.length === 1
+            }
+          ].map(p => (
+            <div
+              key={p.id}
+              onClick={() => setPlatforms(p.id.split("+"))}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                padding: "16px 20px",
+                borderRadius: "16px",
+                border: p.active 
+                  ? "1.5px solid #ec4899" 
+                  : "1px solid rgba(255, 255, 255, 0.08)",
+                background: p.active 
+                  ? "rgba(236, 72, 153, 0.06)" 
+                  : "rgba(255, 255, 255, 0.02)",
+                boxShadow: p.active 
+                  ? "0 0 15px rgba(236, 72, 153, 0.15)" 
+                  : "none",
+                cursor: "pointer",
+                transition: "all 0.25s ease"
+              }}
+              className="safe-platform-toggle-btn"
+            >
+              <div style={{ marginRight: "12px", display: "flex", alignItems: "center" }}>
+                {p.icon}
+              </div>
+              <span style={{ fontSize: "14px", fontWeight: 700, color: p.active ? "#fff" : "#cbd5e1" }}>
+                {p.label}
+              </span>
+              {p.active && (
+                <span 
+                  style={{ 
+                    background: "linear-gradient(135deg, #db2777, #f97316)", 
+                    color: "#fff", 
+                    fontSize: "9px", 
+                    fontWeight: 900, 
+                    padding: "3px 8px", 
+                    borderRadius: "100px", 
+                    marginLeft: "auto",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px"
+                  }}
+                >
+                  Selected
+                </span>
+              )}
+            </div>
+          ))}
         </div>
 
-        <div className="viral-search-actions">
-          <div className="viral-search-selects-group">
-            {/* Country Selector */}
-            <select
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              style={{ ...S.input, padding: "0 16px", height: "48px", appearance: "none", paddingRight: "40px", background: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 12px center`, cursor: "pointer" }}
-            >
-              {COUNTRIES.map(c => (
-                <option key={c.code} value={c.code} className="bg-zinc-950 text-white font-sans text-xs">
-                  {c.name}
-                </option>
-              ))}
-            </select>
-
-            {/* Scope selector */}
-            <select
-              value={platforms.join("+")}
-              onChange={(e) => setPlatforms(e.target.value.split("+"))}
-              style={{ ...S.input, padding: "0 16px", height: "48px", appearance: "none", paddingRight: "40px", background: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 12px center`, cursor: "pointer" }}
-            >
-              <option value="reddit+google">Reddit + Google</option>
-              <option value="reddit">Reddit Feeds Only</option>
-              <option value="google">Google Trends Only</option>
-              <option value="instagram">Instagram Graph Signals</option>
-            </select>
+        {/* Search Input Box */}
+        <div 
+          style={{ 
+            background: "rgba(0, 0, 0, 0.45)", 
+            borderRadius: "16px", 
+            border: "1px solid rgba(255, 255, 255, 0.06)", 
+            padding: "8px 16px", 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "space-between",
+            marginBottom: "24px"
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1 }}>
+            <Search size={20} color="#64748b" />
+            <input
+              value={platforms.includes("instagram") && platforms.length === 1 ? "Connected Instagram Account (No search query required)" : niche}
+              onChange={(e) => setNiche(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && !platforms.includes("instagram") && handleSearch()}
+              placeholder="Search keywords, creators, or niches..."
+              disabled={platforms.includes("instagram") && platforms.length === 1}
+              style={{ 
+                background: "transparent", 
+                border: "none", 
+                padding: "12px 0", 
+                width: "100%", 
+                fontSize: "16px", 
+                outline: "none",
+                color: (platforms.includes("instagram") && platforms.length === 1) ? "#64748b" : "#fff",
+                cursor: (platforms.includes("instagram") && platforms.length === 1) ? "not-allowed" : "text"
+              }}
+            />
           </div>
-
           <button
             onClick={() => handleSearch()}
             disabled={loading}
-            style={{ ...S.btnPrimary, height: "48px" }}
-            className="viral-search-submit-btn"
+            style={{ 
+              background: "linear-gradient(135deg, #7c3aed, #db2777)", 
+              color: "#fff", 
+              fontWeight: 700, 
+              borderRadius: "12px", 
+              border: "none", 
+              cursor: "pointer", 
+              padding: "12px 32px", 
+              fontSize: "14px", 
+              display: "flex", 
+              alignItems: "center", 
+              gap: "8px",
+              boxShadow: "0 4px 15px rgba(124, 58, 237, 0.3)"
+            }}
           >
             {loading 
               ? "Fetching..." 
               : (platforms.includes("instagram") && platforms.length === 1 ? "Fetch IG Media" : "Search")
-            } <ArrowUpRight size={16} />
+            }
           </button>
+        </div>
+
+
+        {/* Footer info: Country select + Countdown */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "18px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ width: "8px", height: "8px", background: "#22c55e", borderRadius: "50%", display: "inline-block", boxShadow: "0 0 8px #22c55e", animation: "pulse 2s infinite" }} />
+            <span style={{ fontSize: "11px", fontWeight: 800, color: "#94a3b8", letterSpacing: "1px", textTransform: "uppercase" }}>
+              TRENDING NOW IN
+            </span>
+            <select
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              style={{ 
+                background: "transparent", 
+                border: "none", 
+                color: "#a78bfa", 
+                fontSize: "12px", 
+                fontWeight: 800, 
+                outline: "none", 
+                cursor: "pointer",
+                paddingRight: "8px"
+              }}
+            >
+              {COUNTRIES.map(c => (
+                <option key={c.code} value={c.code} style={{ background: "#0d0f17", color: "#fff" }}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ fontSize: "12px", color: "#64748b", fontWeight: 500 }}>
+            Refreshes in <span style={{ color: "#ec4899", fontFamily: "monospace", fontWeight: 700 }}>{timeLeft}</span>
+          </div>
         </div>
       </div>
 
@@ -406,12 +577,7 @@ export default function SafeViralTrendPage() {
         {/* MAIN WORKING PANELS */}
         <div style={{ minWidth: 0 }}>
           
-          {/* TRENDING INSIGHTS CARDS ROW - Exact replica of original */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px", marginBottom: "40px" }}>
-            <TrendCard title="Trending Reddit Niches" icon={<TrendingUp size={20} color="#a78bfa" />} items={insights.niches} dataKey="name" valueKey="growth" />
-            <TrendCard title="Google Search Topics" icon={<Hash size={20} color="#34d399" />} items={insights.hashtags} dataKey="name" valueKey="count" />
-            <TrendCard title="Instagram Brand Insights" icon={<Music size={20} color="#f472b6" />} items={insights.audio} dataKey="name" valueKey="growth" />
-          </div>
+
 
           {/* RESULTS HEADER */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
@@ -792,6 +958,19 @@ export default function SafeViralTrendPage() {
           padding: 32px 24px;
           position: relative;
           z-index: 1;
+        }
+
+        .safe-platform-toggle-btn:hover {
+          background: rgba(255, 255, 255, 0.05) !important;
+          border-color: rgba(255, 255, 255, 0.15) !important;
+        }
+        .safe-suggestion-pill {
+          transition: all 0.2s ease;
+        }
+        .safe-suggestion-pill:hover {
+          background: rgba(255, 255, 255, 0.05) !important;
+          border-color: rgba(255, 255, 255, 0.1) !important;
+          transform: translateY(-2px);
         }
         
         .viral-header {
