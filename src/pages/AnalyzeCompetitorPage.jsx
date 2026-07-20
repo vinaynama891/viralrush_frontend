@@ -361,6 +361,7 @@ export default function AnalyzeCompetitorPage() {
   const [copiedField, setCopiedField] = useState(null);
   const [wizardCalendarSaving, setWizardCalendarSaving] = useState(false);
   const [wizardCalendarSaved, setWizardCalendarSaved] = useState(false);
+  const [originalTranscript, setOriginalTranscript] = useState("");
 
   const showToast = (msg) => {
     setToast(msg);
@@ -378,6 +379,7 @@ export default function AnalyzeCompetitorPage() {
     setFinalRefined(null);
     setWizardError(null);
     setWizardCalendarSaved(false);
+    setOriginalTranscript("");
   };
 
   const handleGenerateHooks = async () => {
@@ -417,6 +419,7 @@ export default function AnalyzeCompetitorPage() {
     if (!selectedHook || !refineItem) return;
     setWizardLoading(true);
     setWizardError(null);
+    setOriginalTranscript("");
     try {
       const { data } = await api.post("/viral-content/refine", {
         videoId: refineItem.id,
@@ -427,12 +430,16 @@ export default function AnalyzeCompetitorPage() {
         targetLanguage: selectedLang,
         step: "scripts",
         selectedHook: selectedHook.text,
-        videoDuration: refineItem.duration || "auto"
+        videoDuration: refineItem.duration || "auto",
+        videoUrl: refineItem.link
       });
 
       if (data.success && data.refined && Array.isArray(data.refined.scripts)) {
         setWizardScripts(data.refined.scripts);
         setSelectedScript(data.refined.scripts[0]);
+        if (data.refined.transcript) {
+          setOriginalTranscript(data.refined.transcript);
+        }
         setWizardStep(2);
       } else {
         throw new Error("Invalid response format from scripts API");
@@ -932,7 +939,7 @@ export default function AnalyzeCompetitorPage() {
             <div style={{ ...S.glass, padding: "28px", borderRadius: "16px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "20px" }}>
                 <img
-                  src={selectedCompetitor.avatar}
+                  src={getProxiedImage(selectedCompetitor.avatar)}
                   alt={selectedCompetitor.name}
                   style={{ width: "64px", height: "64px", borderRadius: "50%", border: "2px solid #a78bfa", objectFit: "cover" }}
                 />
@@ -948,6 +955,28 @@ export default function AnalyzeCompetitorPage() {
               <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.7)", margin: "0 0 24px 0", lineHeight: 1.6 }}>
                 {selectedCompetitor.bio}
               </p>
+
+              {/* Stats Grid */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "16px", marginTop: "20px", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                {[
+                  { label: "Followers", value: selectedCompetitor.followers, icon: <Users size={14} color="#a78bfa" /> },
+                  { label: "Posts / Videos", value: selectedCompetitor.postsCount, icon: <Video size={14} color="#3b82f6" /> },
+                  { label: "Total Views", value: selectedCompetitor.totalViews, icon: <Eye size={14} color="#10b981" /> },
+                  { label: "Avg Views", value: selectedCompetitor.avgViews, icon: <BarChart2 size={14} color="#fbbf24" /> },
+                  { label: "Engagement", value: selectedCompetitor.engagementRate, icon: <TrendingUp size={14} color="#db2777" /> },
+                  { label: "Virality Score", value: `${selectedCompetitor.viralityScore}/100`, icon: <Zap size={14} color="#e879f9" /> }
+                ].map((stat, idx) => (
+                  <div key={idx} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px", padding: "12px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11px", color: "rgba(255,255,255,0.4)", fontWeight: 700, textTransform: "uppercase" }}>
+                      {stat.icon}
+                      {stat.label}
+                    </div>
+                    <div style={{ fontSize: "16px", fontWeight: 800, color: "#fff" }}>
+                      {stat.value}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
               {/* Content Gap Analysis */}
@@ -995,7 +1024,7 @@ export default function AnalyzeCompetitorPage() {
                       {/* Thumbnail with overlay number */}
                       <div style={{ position: "relative", width: "100%", height: "140px", background: "rgba(0,0,0,0.4)" }}>
                         <img
-                          src={video.thumbnail}
+                          src={getProxiedImage(video.thumbnail)}
                           alt={video.title}
                           style={{ width: "100%", height: "100%", objectFit: "cover" }}
                           onError={(e) => { e.target.src = "/viralrush_logo_placeholder.png"; }}
@@ -1408,6 +1437,18 @@ export default function AnalyzeCompetitorPage() {
                       <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                         <div style={{ fontSize: "16px", color: "#fff", fontWeight: 700 }}>Choose your Script style (Select One):</div>
                       </div>
+
+                      {originalTranscript && (
+                        <div style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.05)", borderRadius: "12px", padding: "16px" }}>
+                          <div style={{ fontSize: "11px", fontWeight: 700, color: "#a78bfa", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                            <Languages size={14} />
+                            Original Video Transcript (Transcribed)
+                          </div>
+                          <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.7)", lineHeight: 1.5, maxHeight: "120px", overflowY: "auto", background: "rgba(0,0,0,0.15)", padding: "12px", borderRadius: "8px", fontStyle: "italic", whiteSpace: "pre-wrap" }}>
+                            {typeof originalTranscript === "string" ? originalTranscript : (originalTranscript?.transcript || JSON.stringify(originalTranscript))}
+                          </div>
+                        </div>
+                      )}
 
                       <div style={{ background: "rgba(124, 58, 237, 0.05)", borderLeft: "3px solid #7c3aed", borderRadius: "0 12px 12px 0", padding: "12px 16px", fontSize: "13px", color: "#cbd5e1" }}>
                         <span style={{ fontWeight: 700, color: "#a78bfa" }}>Selected Hook: </span>
