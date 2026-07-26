@@ -664,6 +664,18 @@ export default function ViralPage() {
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "13px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "#94a3b8", fontWeight: 600 }}>Views:</span>
+                    <span style={{ color: "#fff", fontWeight: 700 }}>{instagramResults.views ? instagramResults.views.toLocaleString() : "0"}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "#94a3b8", fontWeight: 600 }}>Likes:</span>
+                    <span style={{ color: "#fff", fontWeight: 700 }}>{instagramResults.likes ? instagramResults.likes.toLocaleString() : "0"}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "#94a3b8", fontWeight: 600 }}>Comments:</span>
+                    <span style={{ color: "#fff", fontWeight: 700 }}>{instagramResults.comments ? instagramResults.comments.toLocaleString() : "0"}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
                     <span style={{ color: "#94a3b8", fontWeight: 600 }}>Detected Language:</span>
                     <span style={{ color: "#fff", fontWeight: 700 }}>{instagramResults.detectedLanguage}</span>
                   </div>
@@ -1961,7 +1973,8 @@ function RefineContentModal({ item, platform = "youtube", onClose, onCopy }) {
         targetLanguage: selectedLang,
         step: "scripts",
         selectedHook: selectedHook.text,
-        videoDuration: item.reelLength || item.duration || "auto"
+        videoDuration: item.reelLength || item.duration || "auto",
+        videoUrl: item.videoUrl || item.link || ""
       });
 
       if (data.success && data.refined && Array.isArray(data.refined.scripts)) {

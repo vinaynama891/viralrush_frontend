@@ -66,10 +66,15 @@ const S = {
 };
 
 const formatNumberCompact = (num) => {
-  if (num >= 1e9) return (num / 1e9).toFixed(1) + "B";
-  if (num >= 1e6) return (num / 1e6).toFixed(1) + "M";
-  if (num >= 1e3) return (num / 1e3).toFixed(1) + "K";
-  return num.toString();
+  if (num === undefined || num === null) return "0";
+  if (typeof num === "string" && (num.includes("M") || num.includes("K") || num.includes("B") || isNaN(Number(num)))) {
+    return num;
+  }
+  const val = Number(num) || 0;
+  if (val >= 1e9) return (val / 1e9).toFixed(1).replace(/\.0$/, "") + "B";
+  if (val >= 1e6) return (val / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
+  if (val >= 1e3) return (val / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
+  return val.toString();
 };
 
 const generateMockTopVideos = (platform, handle) => {
@@ -112,6 +117,35 @@ const SAMPLE_COMPETITORS = {
       "Humor hooks: Starts reels with a funny tech premise (e.g. 'I bought a phone for 500 Rupees').",
       "Dynamic captions: Large bold white/yellow subtitles that flash word-by-word.",
       "Relatable analogies: Uses food or everyday Indian scenarios to explain complex specs."
+    ],
+    topVideos: [
+      {
+        id: "tb_r1",
+        title: "The Ultimate Secret Phone Settings!",
+        views: "3.4M",
+        likes: "250K",
+        comments: "1.2K",
+        hook: "Change this one setting in your phone right now or get hacked!",
+        link: "https://instagram.com/reel/secretsettings"
+      },
+      {
+        id: "tb_r2",
+        title: "Gadgets Under Rs. 500 That are Actually Good",
+        views: "2.1M",
+        likes: "180K",
+        comments: "850",
+        hook: "These cool tech gadgets cost less than a cup of coffee!",
+        link: "https://instagram.com/reel/cheapgadgets"
+      },
+      {
+        id: "tb_r3",
+        title: "Why iPhone is Slowing Down in Summer",
+        views: "1.8M",
+        likes: "110K",
+        comments: "990",
+        hook: "Here's the real reason your smartphone is lagging in this heat.",
+        link: "https://instagram.com/reel/iphonesummer"
+      }
     ],
     viralReels: [
       {
@@ -166,6 +200,35 @@ const SAMPLE_COMPETITORS = {
       "Cinematic workout transitions: Sleek beat-matching drop transitions during heavy lifts.",
       "Minimalist branding: Subtle product placement, focus is purely on story/humor."
     ],
+    topVideos: [
+      {
+        id: "gs_r1",
+        title: "How it feels when your gym crush walks by",
+        views: "2.8M",
+        likes: "320K",
+        comments: "3.1K",
+        hook: "Trying to look completely normal while squatting 3 plates...",
+        link: "https://instagram.com/reel/gymcrush"
+      },
+      {
+        id: "gs_r2",
+        title: "The only 3 exercises you need for huge shoulders",
+        views: "1.9M",
+        likes: "190K",
+        comments: "720",
+        hook: "Stop wasting time on 10 different shoulder fly variations. Do these.",
+        link: "https://instagram.com/reel/shoulders"
+      },
+      {
+        id: "gs_r3",
+        title: "Leg Day vs Rest Day comparison",
+        views: "1.4M",
+        likes: "125K",
+        comments: "410",
+        hook: "How walking looks on Thursday vs how it looks on Friday morning.",
+        link: "https://instagram.com/reel/legdayfail"
+      }
+    ],
     viralReels: [
       {
         id: "gs_r1",
@@ -219,7 +282,7 @@ function getHooksFallback(title, lang) {
   if (lang === "hindi") {
     return [
       { type: "जिज्ञासा हुक (Curiosity)", text: `रुकिए! अगर आप "${cleanTopic}" में बेहतरीन परिणाम चाहते हैं, तो इस वीडियो को अंत तक जरूर देखें।` },
-      { type: "नुकसान का डर (FOMO)", text: `अगर आप "${cleanTopic}" के लिए यह सीक्रेट ट्रिक नहीं जानते, तो आप हर दिन अपने व्यूज खो रहे हैं।` },
+      { type: "नुकसान का डर (FOMO)", text: `اگر आप "${cleanTopic}" के लिए यह सीक्रेट ट्रिक नहीं जानते, तो आप हर दिन अपने व्यूज खो रहे हैं।` },
       { type: "बड़ा वादा (Bold Promise)", text: `मैं आपको सिर्फ 60 सेकंड में "${cleanTopic}" में महारत हासिल करने का बिल्कुल सही फॉर्मूला दिखाऊंगा।` }
     ];
   } else if (lang === "hinglish") {
@@ -290,14 +353,14 @@ function getScriptsFallback(title, hook, lang) {
 function getFinalFallback(title, hook, script, lang) {
   const { cleanTopic, keyword1 } = getTopicKeywords(title);
   let titleIdea = `🔥 Unlocking the Secret to ${cleanTopic}`;
-  let caption = `Unpopular opinion: Most people are doing "${cleanTopic}" wrong... 😳\n\nIf you've been struggling to see results, here's your sign to change your approach. Save this video so you don't forget it, and let me know your thoughts in the comments! 👇\n\n#viral #${keyword1.toLowerCase().replace(/[^a-z0-9]/g, "")} #success #tips`;
+  let caption = `Unpopular opinion: Most people do "${cleanTopic}" wrong. 😳 Save and try this! 👇\n\n#viral #${keyword1.toLowerCase().replace(/[^a-z0-9]/g, "")} #tips`;
 
   if (lang === "hindi") {
     titleIdea = `🔥 ${cleanTopic} का गुप्त रहस्य जानिए`;
-    caption = `अलोकप्रिय राय: अधिकांश लोग "${cleanTopic}" को गलत तरीके से कर रहे हैं... 😳\n\nयदि आप इसके साथ परिणाम देखने के लिए संघर्ष कर रहे हैं, तो अपना दृष्टिकोण बदलने का यह सही समय है। इस वीडियो को सेव करें और कमेंट्स में अपने विचार बताएं! 👇\n\n#viral #${keyword1.toLowerCase().replace(/[^a-z0-9]/g, "")} #success #tips`;
+    caption = `अलोकप्रिय राय: अधिकांश लोग "${cleanTopic}" को गलत कर रहे हैं। 😳 सेव करें और आज़माएं! 👇\n\n#viral #${keyword1.toLowerCase().replace(/[^a-z0-9]/g, "")} #tips`;
   } else if (lang === "hinglish") {
     titleIdea = `🔥 ${cleanTopic} Ka Secret Blueprint`;
-    caption = `Unpopular opinion: Zyada tar log "${cleanTopic}" ko galat tarike se kar rahe hai... 😳\n\nKaise laga aapko ye video? Comment karke zaroor bataye aur aisi videos ke liye follow karein! 👇\n\n#viral #${keyword1.toLowerCase().replace(/[^a-z0-9]/g, "")} #success #tips`;
+    caption = `Unpopular opinion: Zyada tar log "${cleanTopic}" galat kar rahe hai. 😳 Save karein aur try karein! 👇\n\n#viral #${keyword1.toLowerCase().replace(/[^a-z0-9]/g, "")} #tips`;
   }
 
   return {
@@ -431,7 +494,7 @@ export default function AnalyzeCompetitorPage() {
         step: "scripts",
         selectedHook: selectedHook.text,
         videoDuration: refineItem.duration || "auto",
-        videoUrl: refineItem.link
+        videoUrl: refineItem.videoUrl || refineItem.link
       });
 
       if (data.success && data.refined && Array.isArray(data.refined.scripts)) {
@@ -495,10 +558,15 @@ export default function AnalyzeCompetitorPage() {
       const scheduledDate = new Date();
       scheduledDate.setDate(scheduledDate.getDate() + 3);
 
+      const isInstagram = selectedCompetitor?.platform === "instagram" || 
+                          scannerPlatform === "instagram" || 
+                          (videoUrl && videoUrl.toLowerCase().includes("instagram.com")) ||
+                          (refineItem?.url && refineItem.url.toLowerCase().includes("instagram.com"));
+
       await api.post("/features/calendar", {
         title: finalRefined.title || `Refined Content`,
-        platform: selectedCompetitor?.platform === "instagram" ? "Instagram" : "YouTube",
-        contentType: selectedCompetitor?.platform === "instagram" ? "Reel" : "Video",
+        platform: isInstagram ? "Instagram" : "YouTube",
+        contentType: isInstagram ? "Reel" : "Video",
         scheduledAt: scheduledDate.toISOString(),
         status: "Pending",
         notes: `Refined based on competitor video: ${refineItem.title}\n\nHook: ${finalRefined.script?.hook}\n\nScript: ${finalRefined.script?.fullScript}\n\nCaption: ${finalRefined.caption}`
@@ -641,54 +709,67 @@ export default function AnalyzeCompetitorPage() {
 
     // ── Instagram / Fallback: Simulated Data ──
     setTimeout(() => {
-      const posts = Math.round(Math.random() * 800 + 150);
-      const avg = Math.round(Math.random() * 600 + 100);
-      const total = posts * avg * 1000;
-      const matched = {
-        name: cleanHandle.replace("@", "").split(/[._-]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
-        handle: cleanHandle,
-        platform: scannerPlatform,
-        followers: `${(Math.random() * 4 + 0.5).toFixed(1)}M`,
-        engagementRate: `${(Math.random() * 4 + 2).toFixed(1)}%`,
-        avgViews: `${avg}K`,
-        totalViews: formatNumberCompact(total),
-        viralityScore: Math.round(Math.random() * 15 + 80),
-        bio: `Content creator sharing daily updates about ${scannerPlatform === "instagram" ? "lifestyles & tips" : "viral tech & stories"}. Stay tuned!`,
-        avatar: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150`,
-        postsCount: posts,
-        topVideos: generateMockTopVideos(scannerPlatform, cleanHandle),
-        strategy: [
-          "Fascinating Visual Hooks: Starts with a bold question or aesthetic scene in the first 2 seconds.",
-          "Fast-paced cuts: Audio transitions and visual zooms matching background audio drops.",
-          "Bold word-by-word overlay captions to retain viewers listening on mute.",
-          "Direct comment prompts: Asks the audience to reply with their favorite choice."
-        ],
-        viralReels: [
-          {
-            id: "dyn_r1",
-            title: `The Ultimate ${scannerPlatform === "instagram" ? "Reel" : "Video"} Hack`,
-            views: "1.4M",
-            likes: "120K",
-            comments: "640",
-            hook: "You won't believe how easy it is to double your metrics with this tip...",
-            link: "https://example.com/reel/1"
-          },
-          {
-            id: "dyn_r2",
-            title: "What I wish I knew 5 years ago",
-            views: "980K",
-            likes: "85K",
-            comments: "490",
-            hook: "If I had to start over from scratch, this is exactly what I'd do.",
-            link: "https://example.com/reel/2"
-          }
-        ],
-        nicheGaps: [
-          "Lacks beginner-focused guides and step-by-step documentation.",
-          "Low engagement interaction in comment sections.",
-          "Uncovered sub-topics: cost-effective tools and automation tricks."
-        ]
-      };
+      const lowerHandle = cleanHandle.toLowerCase();
+      let matched = null;
+      
+      // Look up in SAMPLE_COMPETITORS
+      for (const key of Object.keys(SAMPLE_COMPETITORS)) {
+        if (key.toLowerCase() === lowerHandle || key.toLowerCase().replace("@", "") === lowerHandle.replace("@", "")) {
+          matched = { ...SAMPLE_COMPETITORS[key] };
+          break;
+        }
+      }
+      
+      if (!matched) {
+        const posts = Math.round(Math.random() * 800 + 150);
+        const avg = Math.round(Math.random() * 600 + 100);
+        const total = posts * avg * 1000;
+        matched = {
+          name: cleanHandle.replace("@", "").split(/[._-]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
+          handle: cleanHandle,
+          platform: scannerPlatform,
+          followers: `${(Math.random() * 4 + 0.5).toFixed(1)}M`,
+          engagementRate: `${(Math.random() * 4 + 2).toFixed(1)}%`,
+          avgViews: `${avg}K`,
+          totalViews: formatNumberCompact(total),
+          viralityScore: Math.round(Math.random() * 15 + 80),
+          bio: `Content creator sharing daily updates about ${scannerPlatform === "instagram" ? "lifestyles & tips" : "viral tech & stories"}. Stay tuned!`,
+          avatar: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150`,
+          postsCount: posts,
+          topVideos: generateMockTopVideos(scannerPlatform, cleanHandle),
+          strategy: [
+            "Fascinating Visual Hooks: Starts with a bold question or aesthetic scene in the first 2 seconds.",
+            "Fast-paced cuts: Audio transitions and visual zooms matching background audio drops.",
+            "Bold word-by-word overlay captions to retain viewers listening on mute.",
+            "Direct comment prompts: Asks the audience to reply with their favorite choice."
+          ],
+          viralReels: [
+            {
+              id: "dyn_r1",
+              title: `The Ultimate ${scannerPlatform === "instagram" ? "Reel" : "Video"} Hack`,
+              views: "1.4M",
+              likes: "120K",
+              comments: "640",
+              hook: "You won't believe how easy it is to double your metrics with this tip...",
+              link: "https://example.com/reel/1"
+            },
+            {
+              id: "dyn_r2",
+              title: "What I wish I knew 5 years ago",
+              views: "980K",
+              likes: "85K",
+              comments: "490",
+              hook: "If I had to start over from scratch, this is exactly what I'd do.",
+              link: "https://example.com/reel/2"
+            }
+          ],
+          nicheGaps: [
+            "Lacks beginner-focused guides and step-by-step documentation.",
+            "Low engagement interaction in comment sections.",
+            "Uncovered sub-topics: cost-effective tools and automation tricks."
+          ]
+        };
+      }
 
       setSelectedCompetitor(matched);
       setScannerLoading(false);
@@ -728,14 +809,14 @@ export default function AnalyzeCompetitorPage() {
         const payload = response.data.data;
         setAnalysisResult({
           reelUrl: videoUrl,
-          hook: payload.analysis?.hookAnalyzed?.hook || "This is the one mistake you are making every single day...",
-          trigger: payload.analysis?.hookAnalyzed?.psychologicalTrigger || "Curiosity Gap / Fear of Missing Out",
-          viralityScore: payload.analysis?.viralityScore || 94,
+          hook: payload.analysis?.hook || payload.analysis?.hookAnalyzed?.hook || "This is the one mistake you are making every single day...",
+          trigger: (payload.analysis?.emotion && Array.isArray(payload.analysis.emotion) ? payload.analysis.emotion.join(" / ") : payload.analysis?.emotion) || payload.analysis?.hookAnalyzed?.psychologicalTrigger || "Curiosity Gap / Fear of Missing Out",
+          viralityScore: payload.analysis?.viralScore || payload.analysis?.viralityScore || 94,
           transcript: payload.transcript || "Check this out. Most creators spend 4 hours daily editing their videos, but using templates and presets, you can finish it in 15 minutes. Save this video and write down the website in description.",
           originalScript: payload.analysis?.scriptBreakdown || {
-            hook: payload.analysis?.hookAnalyzed?.hook || "This is the one mistake you are making...",
-            body: payload.transcript ? payload.transcript.slice(0, 150) : "Most creators spend 4 hours daily editing their videos...",
-            cta: "Follow for more daily content tips!"
+            hook: payload.analysis?.hook || payload.analysis?.hookAnalyzed?.hook || "This is the one mistake you are making...",
+            body: payload.transcript || "Most creators spend 4 hours daily editing their videos...",
+            cta: payload.analysis?.cta || "Follow for more daily content tips!"
           }
         });
       } else {
@@ -1052,15 +1133,15 @@ export default function AnalyzeCompetitorPage() {
                           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", fontSize: "11px", color: "rgba(255,255,255,0.5)", marginBottom: "12px" }}>
                             <span style={{ display: "inline-flex", alignItems: "center", gap: "3px" }}>
                               <Eye size={12} color="#a78bfa" />
-                              {formatNumberCompact(parseInt(video.views) || 0)}
+                              {formatNumberCompact(video.views)}
                             </span>
                             <span style={{ display: "inline-flex", alignItems: "center", gap: "3px" }}>
                               <Heart size={12} color="#db2777" />
-                              {formatNumberCompact(parseInt(video.likes) || 0)}
+                              {formatNumberCompact(video.likes)}
                             </span>
                             <span style={{ display: "inline-flex", alignItems: "center", gap: "3px" }}>
                               <MessageSquare size={12} color="#10b981" />
-                              {formatNumberCompact(parseInt(video.comments) || 0)}
+                              {formatNumberCompact(video.comments)}
                             </span>
                           </div>
                         </div>
@@ -1250,7 +1331,7 @@ export default function AnalyzeCompetitorPage() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "1px", color: "#a78bfa", fontWeight: 800 }}>Refining Video</div>
                       <div style={{ fontSize: "14px", fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{refineItem.title}</div>
-                      <div style={{ fontSize: "12px", color: "#64748b" }}>Views: {formatNumberCompact(parseInt(refineItem.views) || 0)} • Likes: {formatNumberCompact(parseInt(refineItem.likes) || 0)}</div>
+                      <div style={{ fontSize: "12px", color: "#64748b" }}>Views: {formatNumberCompact(refineItem.views)} • Likes: {formatNumberCompact(refineItem.likes)}</div>
                     </div>
                   </div>
 
