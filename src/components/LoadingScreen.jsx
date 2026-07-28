@@ -57,30 +57,34 @@ const CSS = `
   }
   @media (max-width: 600px) {
     .letters-container {
-      flex-direction: column !important;
+      flex-direction: row !important;
       align-items: center !important;
-      gap: 28px !important;
+      gap: clamp(3px, 1.2vw, 6px) !important;
     }
     .letters-row {
       flex-direction: row !important;
-      align-items: flex-end !important;
+      align-items: center !important;
       justify-content: center !important;
-      gap: clamp(4px, 2.5vw, 12px) !important;
+      gap: clamp(3px, 1.2vw, 6px) !important;
     }
     .letter-item {
       flex-direction: column !important;
       align-items: center !important;
-      gap: 3px !important;
+      gap: 1px !important;
     }
     .letter-word-wrapper {
-      min-height: 1.2em !important;
-      animation-name: wordSlideDown !important;
+      display: flex !important;
+      min-height: 1.1em !important;
+    }
+    .letter-arrow {
+      display: none !important;
     }
     .letter-word-wrapper span {
-      font-size: clamp(0.4rem, 1.8vw, 0.6rem) !important;
+      font-size: clamp(0.38rem, 1.5vw, 0.52rem) !important;
+      letter-spacing: 0px !important;
     }
     .letter-text {
-      font-size: clamp(1.6rem, 7vw, 2.6rem) !important;
+      font-size: clamp(1.3rem, 6vw, 1.9rem) !important;
     }
   }
 `;
@@ -186,7 +190,7 @@ export default function LoadingScreen({ onComplete }) {
                     pointerEvents: 'none',
                   }}
                 >
-                  <span style={{
+                  <span className="letter-arrow" style={{
                     fontSize: 'clamp(0.5rem, 1vw, 0.78rem)',
                     color: 'rgba(255,255,255,0.4)',
                     fontFamily: 'Inter, sans-serif',
@@ -254,7 +258,7 @@ export default function LoadingScreen({ onComplete }) {
                     pointerEvents: 'none',
                   }}
                 >
-                  <span style={{
+                  <span className="letter-arrow" style={{
                     fontSize: 'clamp(0.5rem, 1vw, 0.78rem)',
                     color: 'rgba(255,255,255,0.4)',
                     fontFamily: 'Inter, sans-serif',
