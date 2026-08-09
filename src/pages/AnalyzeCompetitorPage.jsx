@@ -6,8 +6,9 @@ import {
   TrendingDown, Globe, Sparkles, RefreshCw, Send, AlertCircle,
   HelpCircle, Eye, ShieldAlert, Award, Clock, Hash, Music, Play,
   Users, Target, BarChart2, Zap, ArrowRight, Video, UserPlus, Heart,
-  X, ArrowLeft, Languages, MessageCircle
+  X, ArrowLeft, Languages, MessageCircle, FileText
 } from "lucide-react";
+import { jsPDF } from "jspdf";
 import api, { getProxiedImage } from "../lib/api";
 
 const InstagramIcon = ({ size = 20 }) => (
@@ -66,23 +67,34 @@ const S = {
 };
 
 const formatNumberCompact = (num) => {
-  if (num === undefined || num === null) return "0";
+  if (num === undefined || num === null) return "0+";
   if (typeof num === "string" && (num.includes("M") || num.includes("K") || num.includes("B") || isNaN(Number(num)))) {
-    return num;
+    return num.endsWith("+") ? num : `${num}+`;
   }
   const val = Number(num) || 0;
-  if (val >= 1e9) return (val / 1e9).toFixed(1).replace(/\.0$/, "") + "B";
-  if (val >= 1e6) return (val / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
-  if (val >= 1e3) return (val / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
-  return val.toString();
+  if (val >= 1e9) return (val / 1e9).toFixed(1).replace(/\.0$/, "") + "B+";
+  if (val >= 1e6) return (val / 1e6).toFixed(1).replace(/\.0$/, "") + "M+";
+  if (val >= 1e3) return (val / 1e3).toFixed(1).replace(/\.0$/, "") + "K+";
+  return val.toString() + "+";
+};
+
+const stringHash = (str) => {
+  let hash = 0;
+  for (let i = 0; i < (str || "").length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
 };
 
 const generateMockTopVideos = (platform, handle) => {
   const isYt = platform === "youtube";
+  const baseHash = stringHash(handle || "creator");
   return Array.from({ length: 15 }, (_, idx) => {
-    const viewsNum = Math.round(Math.random() * 800000 + 200000);
-    const likesNum = Math.round(viewsNum * (Math.random() * 0.08 + 0.02));
-    const commentsNum = Math.round(likesNum * 0.01);
+    const seed = baseHash + idx * 7919;
+    const viewsNum = (seed % 750000) + 180000;
+    const likesNum = Math.round(viewsNum * (0.05 + ((seed % 40) / 1000)));
+    const commentsNum = Math.round(likesNum * 0.012);
     const videoId = `mock_vid_${idx + 1}`;
     
     return {
@@ -91,9 +103,10 @@ const generateMockTopVideos = (platform, handle) => {
         ? `How to Master ${handle.replace("@", "")} Niche in 2026 (Part ${idx + 1})`
         : `Secret ${handle.replace("@", "")} Hacks You Must Try Today! 🔥`,
       thumbnail: `https://images.unsplash.com/photo-${1500000000000 + idx * 100000}?w=400&fit=crop`,
-      views: viewsNum.toString(),
-      likes: likesNum.toString(),
-      comments: commentsNum.toString(),
+      views: viewsNum,
+      likes: likesNum,
+      comments: commentsNum,
+      duration: isYt ? "Video" : "Reel",
       link: isYt ? `https://www.youtube.com/watch?v=${videoId}` : `https://www.instagram.com/reel/${videoId}/`
     };
   });
@@ -431,6 +444,154 @@ export default function AnalyzeCompetitorPage() {
     setTimeout(() => setToast(""), 3000);
   };
 
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    if (!finalRefined) return;
+    setPdfLoading(true);
+    try {
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+      });
+
+      let fontName = "helvetica";
+
+      try {
+        const fontUrl = "https://cdn.jsdelivr.net/gh/google/fonts/ofl/poppins/Poppins-Regular.ttf";
+        const response = await fetch(fontUrl);
+        if (response.ok) {
+          const fontBuffer = await response.arrayBuffer();
+          const fontBytes = new Uint8Array(fontBuffer);
+          let fontBinary = "";
+          for (let i = 0; i < fontBytes.length; i++) {
+            fontBinary += String.fromCharCode(fontBytes[i]);
+          }
+          doc.addFileToVFS("Poppins-Regular.ttf", btoa(fontBinary));
+          doc.addFont("Poppins-Regular.ttf", "Poppins", "normal");
+          fontName = "Poppins";
+        }
+      } catch (fontErr) {
+        console.warn("Could not load custom Poppins font, falling back to Helvetica:", fontErr);
+        fontName = "helvetica";
+      }
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      const contentWidth = pageWidth - (margin * 2);
+
+      let y = 40;
+
+      const sanitizeText = (txt) => {
+        if (typeof txt !== "string") return "";
+        return txt.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, "");
+      };
+
+      const addSectionHeader = (titleText) => {
+        if (y + 12 > pageHeight - 25) {
+          doc.addPage();
+          y = 40;
+        }
+        doc.setFont(fontName, fontName === "Poppins" ? "normal" : "bold");
+        doc.setFontSize(fontName === "Poppins" ? 14 : 13);
+        doc.setTextColor(124, 58, 237);
+        doc.text(titleText.toUpperCase(), margin, y);
+        y += 6;
+      };
+
+      const addContentBlock = (text, isItalic = false) => {
+        doc.setFont(fontName, (fontName === "Poppins" || !isItalic) ? "normal" : "italic");
+        doc.setFontSize(10);
+        doc.setTextColor(30, 41, 59);
+        
+        const cleanText = sanitizeText(text);
+        const lines = doc.splitTextToSize(cleanText, contentWidth);
+        for (let i = 0; i < lines.length; i++) {
+          if (y + 6 > pageHeight - 25) {
+            doc.addPage();
+            y = 40;
+          }
+          doc.text(lines[i], margin, y);
+          y += 6;
+        }
+        y += 6;
+      };
+
+      if (finalRefined.title) {
+        addSectionHeader("Refined Title Idea");
+        addContentBlock(finalRefined.title);
+      }
+
+      const hookText = finalRefined.script?.hook || selectedHook?.text;
+      if (hookText) {
+        addSectionHeader("Selected Opening Hook");
+        addContentBlock(`"${hookText}"`, true);
+      }
+
+      const scriptText = finalRefined.script?.fullScript || selectedScript?.text;
+      if (scriptText) {
+        addSectionHeader("Full Word-for-Word Script");
+        addContentBlock(scriptText);
+      }
+
+      if (finalRefined.caption) {
+        addSectionHeader("Caption & Description");
+        addContentBlock(finalRefined.caption);
+      }
+
+      if (finalRefined.hashtags && finalRefined.hashtags.length > 0) {
+        addSectionHeader("Best Viral Hashtags");
+        const hashtagString = finalRefined.hashtags.map(h => `#${h}`).join(" ");
+        addContentBlock(hashtagString);
+      }
+
+      const totalPages = doc.internal.pages.length - 1;
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.5);
+        doc.line(margin, 26, pageWidth - margin, 26);
+
+        doc.setFont(fontName, fontName === "Poppins" ? "normal" : "bold");
+        doc.setFontSize(fontName === "Poppins" ? 17 : 16);
+        doc.setTextColor(124, 58, 237);
+        const logoText = "VIRALRUSH";
+        const logoWidth = doc.getTextWidth(logoText);
+        doc.text(logoText, (pageWidth - logoWidth) / 2, 17);
+
+        doc.setFont(fontName, "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(100, 116, 139);
+        const subtitleText = "AI-POWERED CREATOR HUB";
+        const subtitleWidth = doc.getTextWidth(subtitleText);
+        doc.text(subtitleText, (pageWidth - subtitleWidth) / 2, 22);
+
+        doc.line(margin, pageHeight - 16, pageWidth - margin, pageHeight - 16);
+
+        doc.setFont(fontName, "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(148, 163, 184);
+        
+        doc.text("Generated by ViralRush Creator AI", margin, pageHeight - 10);
+
+        const pageText = `Page ${i} of ${totalPages}`;
+        const pageTextWidth = doc.getTextWidth(pageText);
+        doc.text(pageText, pageWidth - margin - pageTextWidth, pageHeight - 10);
+      }
+
+      doc.save(`viralrush-refined-${Date.now()}.pdf`);
+      showToast("PDF downloaded successfully!");
+    } catch (err) {
+      console.error("PDF download error:", err);
+      showToast("Failed to generate PDF. Please try again.");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   const handleOpenRefine = (video) => {
     setRefineItem(video);
     setWizardStep(0);
@@ -497,22 +658,58 @@ export default function AnalyzeCompetitorPage() {
         videoUrl: refineItem.videoUrl || refineItem.link
       });
 
-      if (data.success && data.refined && Array.isArray(data.refined.scripts)) {
-        setWizardScripts(data.refined.scripts);
-        setSelectedScript(data.refined.scripts[0]);
+      if (data.success && data.refined && Array.isArray(data.refined.scripts) && data.refined.scripts.length > 0) {
+        const singleScript = data.refined.scripts[0];
+        setWizardScripts([singleScript]);
+        setSelectedScript(singleScript);
         if (data.refined.transcript) {
           setOriginalTranscript(data.refined.transcript);
         }
-        setWizardStep(2);
+        // Auto-advance to Step 3 (final), skip script selection
+        await handleGenerateFinalWithScript(singleScript);
       } else {
         throw new Error("Invalid response format from scripts API");
       }
     } catch (err) {
       console.warn("Scripts API failed, triggering local fallback:", err.message);
       const fallbackScripts = getScriptsFallback(refineItem.title, selectedHook.text, selectedLang);
-      setWizardScripts(fallbackScripts);
-      setSelectedScript(fallbackScripts[0]);
+      const singleScript = fallbackScripts[0];
+      setWizardScripts([singleScript]);
+      setSelectedScript(singleScript);
       setWizardStep(2);
+    } finally {
+      setWizardLoading(false);
+    }
+  };
+
+  const handleGenerateFinalWithScript = async (scriptObj) => {
+    if (!selectedHook || !scriptObj || !refineItem) return;
+    setWizardLoading(true);
+    setWizardError(null);
+    try {
+      const { data } = await api.post("/viral-content/refine", {
+        videoId: refineItem.id,
+        title: refineItem.title,
+        description: refineItem.title,
+        platform: selectedCompetitor?.platform || "youtube",
+        channelTitle: selectedCompetitor?.name || "",
+        targetLanguage: selectedLang,
+        step: "final",
+        selectedHook: selectedHook.text,
+        selectedScript: scriptObj.text
+      });
+
+      if (data.success && data.refined) {
+        setFinalRefined(data.refined);
+        setWizardStep(3);
+      } else {
+        throw new Error("Invalid response format from final API");
+      }
+    } catch (err) {
+      console.warn("Final API failed, triggering local fallback:", err.message);
+      const fallbackFinal = getFinalFallback(refineItem.title, selectedHook.text, scriptObj.text, selectedLang);
+      setFinalRefined(fallbackFinal);
+      setWizardStep(3);
     } finally {
       setWizardLoading(false);
     }
@@ -670,7 +867,11 @@ export default function AnalyzeCompetitorPage() {
           const d = res.data.data;
           const followers = parseInt(d.followersCount) || 0;
           const posts = parseInt(d.postsCount) || 0;
-          const totalViews = parseInt(d.totalViews) || 0;
+          
+          const topVids = (d.topVideos && d.topVideos.length > 0) ? d.topVideos : generateMockTopVideos("instagram", cleanHandle);
+          const topVidsSum = topVids.reduce((acc, v) => acc + (parseInt(v.views) || 0), 0);
+          const avgViewsNum = topVids.length > 0 ? Math.round(topVidsSum / topVids.length) : 0;
+          const totalViewsNum = (d.totalViews && d.totalViews > topVidsSum) ? parseInt(d.totalViews) : (avgViewsNum * Math.max(posts, 1));
 
           setSelectedCompetitor({
             name: d.name,
@@ -678,21 +879,21 @@ export default function AnalyzeCompetitorPage() {
             platform: "instagram",
             followers: formatNumberCompact(followers),
             followersRaw: followers,
-            engagementRate: posts > 0 ? `${((totalViews / posts / Math.max(followers, 1)) * 100).toFixed(1)}%` : "N/A",
-            avgViews: posts > 0 ? formatNumberCompact(Math.round(totalViews / posts)) : "0",
-            totalViews: formatNumberCompact(totalViews),
-            viralityScore: Math.min(99, Math.round((totalViews / Math.max(followers, 1)) * 0.001 + 75)),
+            engagementRate: followers > 0 ? `${((avgViewsNum / followers) * 100).toFixed(1)}%` : "N/A",
+            avgViews: formatNumberCompact(avgViewsNum),
+            totalViews: formatNumberCompact(totalViewsNum),
+            viralityScore: Math.min(99, Math.round((avgViewsNum / Math.max(followers, 1)) * 1000 + 75)),
             bio: d.bio ? d.bio.substring(0, 200) : "Instagram Professional Account",
             avatar: d.avatar || `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150`,
             postsCount: posts,
-            topVideos: d.topVideos && d.topVideos.length > 0 ? d.topVideos : generateMockTopVideos("instagram", cleanHandle),
-            strategy: [
+            topVideos: topVids,
+            strategy: d.strategy || [
               "Fascinating Visual Hooks: Starts with a bold question or aesthetic scene in the first 2 seconds.",
               "Fast-paced cuts: Audio transitions and visual zooms matching background audio drops.",
               "Bold word-by-word overlay captions to retain viewers listening on mute.",
               "Direct comment prompts: Asks the audience to reply with their favorite choice."
             ],
-            nicheGaps: [
+            nicheGaps: d.nicheGaps || [
               "Lacks beginner-focused guides and step-by-step documentation.",
               "Low engagement interaction in comment sections.",
               "Uncovered sub-topics: cost-effective tools and automation tricks."
@@ -1519,6 +1720,11 @@ export default function AnalyzeCompetitorPage() {
                         <div style={{ fontSize: "16px", color: "#fff", fontWeight: 700 }}>Choose your Script style (Select One):</div>
                       </div>
 
+                      <div style={{ background: "rgba(124, 58, 237, 0.05)", borderLeft: "3px solid #7c3aed", borderRadius: "0 12px 12px 0", padding: "12px 16px", fontSize: "13px", color: "#cbd5e1" }}>
+                        <span style={{ fontWeight: 700, color: "#a78bfa" }}>Selected Hook: </span>
+                        "{selectedHook?.text}"
+                      </div>
+
                       {originalTranscript && (
                         <div style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.05)", borderRadius: "12px", padding: "16px" }}>
                           <div style={{ fontSize: "11px", fontWeight: 700, color: "#a78bfa", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
@@ -1531,10 +1737,6 @@ export default function AnalyzeCompetitorPage() {
                         </div>
                       )}
 
-                      <div style={{ background: "rgba(124, 58, 237, 0.05)", borderLeft: "3px solid #7c3aed", borderRadius: "0 12px 12px 0", padding: "12px 16px", fontSize: "13px", color: "#cbd5e1" }}>
-                        <span style={{ fontWeight: 700, color: "#a78bfa" }}>Selected Hook: </span>
-                        "{selectedHook?.text}"
-                      </div>
                       
                       <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                         {wizardScripts.map((sc, idx) => {
@@ -1699,6 +1901,42 @@ export default function AnalyzeCompetitorPage() {
                           {finalRefined.caption}
                         </div>
                       </div>
+
+                      {/* Generate PDF Button */}
+                      <button
+                        type="button"
+                        onClick={handleDownloadPDF}
+                        disabled={pdfLoading}
+                        style={{
+                          background: "linear-gradient(135deg, #7c3aed, #db2777)",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: "14px",
+                          padding: "14px 20px",
+                          fontSize: "14px",
+                          fontWeight: 700,
+                          cursor: pdfLoading ? "not-allowed" : "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "8px",
+                          transition: "all 0.2s ease",
+                          width: "100%",
+                          opacity: pdfLoading ? 0.7 : 1,
+                          boxShadow: "0 4px 15px rgba(124, 58, 237, 0.2)"
+                        }}
+                      >
+                        {pdfLoading ? (
+                          <>
+                            <div style={{ width: "16px", height: "16px", border: "2px solid #fff", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                            Generating PDF...
+                          </>
+                        ) : (
+                          <>
+                            <FileText size={16} /> Generate & Download PDF
+                          </>
+                        )}
+                      </button>
 
                       {/* Refined Hashtags */}
                       <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px", padding: "20px" }}>

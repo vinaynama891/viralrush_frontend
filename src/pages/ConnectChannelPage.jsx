@@ -4,8 +4,7 @@ import ConnectInstagramButton from "@/components/instagram/ConnectInstagramButto
 import InstagramProfileCard from "@/components/instagram/InstagramProfileCard";
 import YoutubeProfileCard from "@/components/youtube/YoutubeProfileCard";
 import ConnectYoutubeButton from "@/components/youtube/ConnectYoutubeButton";
-import ConnectFacebookButton from "@/components/facebook/ConnectFacebookButton";
-import FacebookProfileCard from "@/components/facebook/FacebookProfileCard";
+
 
 const platforms = [
   {
@@ -36,21 +35,191 @@ const platforms = [
       </svg>
     ),
   },
-  {
-    id: "facebook",
-    name: "Facebook Pages",
-    desc: "Manage Messenger conversations, automate page interactions and lead generation",
-    pills: ["Messenger Bots", "Lead Forms", "Comment Replies"],
-    btnGradient: "linear-gradient(135deg, #1877f2, #0a5bc4)",
-    btnShadow: "rgba(24,119,242,0.4)",
-    iconBg: "linear-gradient(135deg, #1877f2, #0a5bc4)",
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-      </svg>
-    ),
-  },
 ];
+
+function InstructionCard() {
+  const [selectedMethod, setSelectedMethod] = useState("login"); // "login" or "oauth"
+
+  return (
+    <div
+      style={{
+        background: "#141414",
+        border: "1px solid rgba(255,255,255,0.07)",
+        borderRadius: 18,
+        padding: "28px 24px 24px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 0,
+        transition: "transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease",
+        cursor: "default",
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.transform = "translateY(-6px)";
+        e.currentTarget.style.boxShadow = `0 20px 48px rgba(0,0,0,0.5)`;
+        e.currentTarget.style.borderColor = "rgba(91,46,255,0.25)";
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)";
+      }}
+    >
+      {/* Icon + Title row */}
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+        <div style={{
+          width: 48, height: 48, borderRadius: 14, flexShrink: 0,
+          background: "linear-gradient(135deg, #a78bfa, #7c3aed)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 4px 16px rgba(124, 58, 237, 0.3)",
+        }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
+        </div>
+        <div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", fontFamily: "var(--font-primary)", marginBottom: 2 }}>
+            Connection Guide
+          </div>
+          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontFamily: "var(--font-ui)" }}>
+            Select an integration method
+          </div>
+        </div>
+      </div>
+
+      {/* Description */}
+      <p style={{
+        fontSize: 13, color: "rgba(255,255,255,0.45)",
+        lineHeight: 1.6, marginBottom: 20,
+        fontFamily: "var(--font-ui)",
+      }}>
+        Compare connection methods to choose the best option for your Instagram automation setup.
+      </p>
+
+      {/* Selector Tabs */}
+      <div style={{
+        display: "flex",
+        background: "rgba(255,255,255,0.04)",
+        padding: 4,
+        borderRadius: 10,
+        border: "1px solid rgba(255,255,255,0.06)",
+        marginBottom: 20,
+      }}>
+        <button
+          onClick={() => setSelectedMethod("login")}
+          style={{
+            flex: 1,
+            padding: "8px 12px",
+            borderRadius: 7,
+            background: selectedMethod === "login" ? "rgba(91,46,255,0.18)" : "transparent",
+            color: selectedMethod === "login" ? "#a78bfa" : "rgba(255,255,255,0.6)",
+            fontSize: 12,
+            fontWeight: 700,
+            cursor: "pointer",
+            fontFamily: "var(--font-ui)",
+            transition: "all 0.2s ease",
+            border: selectedMethod === "login" ? "1px solid rgba(91,46,255,0.3)" : "1px solid transparent",
+          }}
+        >
+          Instagram Login
+        </button>
+        <button
+          onClick={() => setSelectedMethod("oauth")}
+          style={{
+            flex: 1,
+            padding: "8px 12px",
+            borderRadius: 7,
+            background: selectedMethod === "oauth" ? "rgba(91,46,255,0.18)" : "transparent",
+            color: selectedMethod === "oauth" ? "#a78bfa" : "rgba(255,255,255,0.6)",
+            fontSize: 12,
+            fontWeight: 700,
+            cursor: "pointer",
+            fontFamily: "var(--font-ui)",
+            transition: "all 0.2s ease",
+            border: selectedMethod === "oauth" ? "1px solid rgba(91,46,255,0.3)" : "1px solid transparent",
+          }}
+        >
+          Meta OAuth
+        </button>
+      </div>
+
+      {/* Dynamic Content */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1 }}>
+        {/* Features / Benefits */}
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#10b981", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 12 }}>✔</span> Features & Benefits
+          </div>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+            {selectedMethod === "login" ? (
+              <>
+                <li style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", display: "flex", alignItems: "flex-start", gap: 6 }}>
+                  <span style={{ color: "#10b981", flexShrink: 0 }}>•</span>
+                  <span>Connect directly using username & password</span>
+                </li>
+                <li style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", display: "flex", alignItems: "flex-start", gap: 6 }}>
+                  <span style={{ color: "#10b981", flexShrink: 0 }}>•</span>
+                  <span>Works with personal accounts</span>
+                </li>
+                <li style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", display: "flex", alignItems: "flex-start", gap: 6 }}>
+                  <span style={{ color: "#10b981", flexShrink: 0 }}>•</span>
+                  <span>Quick setup with no Meta Developer account required</span>
+                </li>
+              </>
+            ) : (
+              <>
+                <li style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", display: "flex", alignItems: "flex-start", gap: 6 }}>
+                  <span style={{ color: "#10b981", flexShrink: 0 }}>•</span>
+                  <span>Official Meta API connection (100% safe)</span>
+                </li>
+                <li style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", display: "flex", alignItems: "flex-start", gap: 6 }}>
+                  <span style={{ color: "#10b981", flexShrink: 0 }}>•</span>
+                  <span>Very high rate limits & permanent connection</span>
+                </li>
+                <li style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", display: "flex", alignItems: "flex-start", gap: 6 }}>
+                  <span style={{ color: "#10b981", flexShrink: 0 }}>•</span>
+                  <span>Highly reliable automation setup</span>
+                </li>
+              </>
+            )}
+          </ul>
+        </div>
+
+        {/* Drawbacks / Limitations */}
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#f43f5e", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 12 }}>⚠</span> Drawbacks & Risks
+          </div>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+            {selectedMethod === "login" ? (
+              <>
+                <li style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", display: "flex", alignItems: "flex-start", gap: 6 }}>
+                  <span style={{ color: "#f43f5e", flexShrink: 0 }}>•</span>
+                  <span>Subject to standard security checks (our built-in smart rate-limiting algorithm keeps you safe)</span>
+                </li>
+                <li style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", display: "flex", alignItems: "flex-start", gap: 6 }}>
+                  <span style={{ color: "#f43f5e", flexShrink: 0 }}>•</span>
+                  <span>Requires session refresh if password changes</span>
+                </li>
+              </>
+            ) : (
+              <>
+                <li style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", display: "flex", alignItems: "flex-start", gap: 6 }}>
+                  <span style={{ color: "#f43f5e", flexShrink: 0 }}>•</span>
+                  <span>Requires Facebook Page linking to Instagram</span>
+                </li>
+                <li style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", display: "flex", alignItems: "flex-start", gap: 6 }}>
+                  <span style={{ color: "#f43f5e", flexShrink: 0 }}>•</span>
+                  <span>Does not support Personal accounts (Creator/Business only)</span>
+                </li>
+              </>
+            )}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function ConnectChannelPage() {
   const [connected, setConnected] = useState({
@@ -145,7 +314,118 @@ export default function ConnectChannelPage() {
     setYtLoading(false);
   };
 
-  const connectedCount = Object.values(connected).filter(Boolean).length;
+  const connectedCount = platforms.filter((p) => connected[p.id]).length;
+
+  const renderPlatformCard = (p) => {
+    const isConnected = !!connected[p.id];
+    return (
+      <div
+        key={p.id}
+        style={{
+          background: "#141414",
+          border: `1px solid ${isConnected ? "rgba(37,211,102,0.3)" : "rgba(255,255,255,0.07)"}`,
+          borderRadius: 18,
+          padding: "28px 24px 24px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 0,
+          transition: "transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease",
+          cursor: "default",
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.transform = "translateY(-6px)";
+          e.currentTarget.style.boxShadow = `0 20px 48px rgba(0,0,0,0.5)`;
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.transform = "translateY(0)";
+          e.currentTarget.style.boxShadow = "none";
+        }}
+      >
+        {/* Icon + Name row */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 16 }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: 14, flexShrink: 0,
+            background: p.iconBg,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: `0 4px 16px ${p.btnShadow}`,
+          }}>
+            {p.icon}
+          </div>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", fontFamily: "var(--font-primary)", marginBottom: 3 }}>
+              {p.name}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              {isConnected ? (
+                <>
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#25d366", display: "inline-block" }} />
+                  <span style={{ fontSize: 11, color: "#25d366", fontFamily: "var(--font-ui)" }}>Connected</span>
+                </>
+              ) : (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
+                  <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", fontFamily: "var(--font-ui)" }}>Not connected</span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Description */}
+        <p style={{
+          fontSize: 13, color: "rgba(255,255,255,0.45)",
+          lineHeight: 1.65, marginBottom: 16,
+          fontFamily: "var(--font-ui)",
+        }}>
+          {p.desc}
+        </p>
+
+        {/* Feature pills */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
+          {p.pills.map((pill) => (
+            <span key={pill} style={{
+              fontSize: 11, color: "rgba(255,255,255,0.55)",
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: 6, padding: "4px 10px",
+              fontFamily: "var(--font-ui)",
+            }}>
+              {pill}
+            </span>
+          ))}
+        </div>
+
+        {/* CTA button or custom profiles */}
+        {p.id === "instagram" ? (
+          igLoading ? (
+            <div style={{ textAlign: "center", padding: "10px 0" }}>
+              <div style={{ width: 18, height: 18, border: "2px solid rgba(255,255,255,0.1)", borderTopColor: "#dc2743", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} />
+            </div>
+          ) : isConnected && igProfile ? (
+            <InstagramProfileCard profile={igProfile} onDisconnectSuccess={fetchInstagramStatus} />
+          ) : (
+            <ConnectInstagramButton onLoadingStateChange={(isLoading) => setIgLoading(isLoading)} />
+          )
+        ) : p.id === "youtube" ? (
+          ytLoading ? (
+            <div style={{ textAlign: "center", padding: "10px 0" }}>
+              <div style={{ width: 18, height: 18, border: "2px solid rgba(255,255,255,0.1)", borderTopColor: "#ff0000", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} />
+            </div>
+          ) : isConnected && ytProfile ? (
+            <YoutubeProfileCard profile={ytProfile} onDisconnectSuccess={fetchYoutubeStatus} />
+          ) : (
+            <ConnectYoutubeButton
+              onLoadingStateChange={(isLoading) => setYtLoading(isLoading)}
+              onConnectSuccess={handleYoutubeConnectSuccess}
+            />
+          )
+        ) : null}
+      </div>
+    );
+  };
 
   return (
     <div 
@@ -220,7 +500,7 @@ export default function ConnectChannelPage() {
             boxShadow: connectedCount > 0 ? "0 0 8px #25d366" : "none",
           }} />
           <span style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", fontFamily: "var(--font-ui)" }}>
-            {connectedCount} / 3 Connected
+            {connectedCount} / {platforms.length} Connected
           </span>
         </div>
       </div>
@@ -236,128 +516,9 @@ export default function ConnectChannelPage() {
           margin: "0 auto",
         }}
       >
-        {platforms.map((p) => {
-          const isConnected = !!connected[p.id];
-          return (
-            <div
-              key={p.id}
-              style={{
-                background: "#141414",
-                border: `1px solid ${isConnected ? "rgba(37,211,102,0.3)" : "rgba(255,255,255,0.07)"}`,
-                borderRadius: 18,
-                padding: "28px 24px 24px",
-                display: "flex",
-                flexDirection: "column",
-                gap: 0,
-                transition: "transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease",
-                cursor: "default",
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.transform = "translateY(-6px)";
-                e.currentTarget.style.boxShadow = `0 20px 48px rgba(0,0,0,0.5)`;
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "none";
-              }}
-            >
-              {/* Icon + Name row */}
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 16 }}>
-                <div style={{
-                  width: 48, height: 48, borderRadius: 14, flexShrink: 0,
-                  background: p.iconBg,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: `0 4px 16px ${p.btnShadow}`,
-                }}>
-                  {p.icon}
-                </div>
-                <div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", fontFamily: "var(--font-primary)", marginBottom: 3 }}>
-                    {p.name}
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                    {isConnected ? (
-                      <>
-                        <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#25d366", display: "inline-block" }} />
-                        <span style={{ fontSize: 11, color: "#25d366", fontFamily: "var(--font-ui)" }}>Connected</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2">
-                          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-                        </svg>
-                        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", fontFamily: "var(--font-ui)" }}>Not connected</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Description */}
-              <p style={{
-                fontSize: 13, color: "rgba(255,255,255,0.45)",
-                lineHeight: 1.65, marginBottom: 16,
-                fontFamily: "var(--font-ui)",
-              }}>
-                {p.desc}
-              </p>
-
-              {/* Feature pills */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
-                {p.pills.map((pill) => (
-                  <span key={pill} style={{
-                    fontSize: 11, color: "rgba(255,255,255,0.55)",
-                    background: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: 6, padding: "4px 10px",
-                    fontFamily: "var(--font-ui)",
-                  }}>
-                    {pill}
-                  </span>
-                ))}
-              </div>
-
-              {/* CTA button or custom profiles */}
-              {p.id === "instagram" ? (
-                igLoading ? (
-                  <div style={{ textAlign: "center", padding: "10px 0" }}>
-                    <div style={{ width: 18, height: 18, border: "2px solid rgba(255,255,255,0.1)", borderTopColor: "#dc2743", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} />
-                  </div>
-                ) : isConnected && igProfile ? (
-                  <InstagramProfileCard profile={igProfile} onDisconnectSuccess={fetchInstagramStatus} />
-                ) : (
-                  <ConnectInstagramButton onLoadingStateChange={(isLoading) => setIgLoading(isLoading)} />
-                )
-              ) : p.id === "youtube" ? (
-                ytLoading ? (
-                  <div style={{ textAlign: "center", padding: "10px 0" }}>
-                    <div style={{ width: 18, height: 18, border: "2px solid rgba(255,255,255,0.1)", borderTopColor: "#ff0000", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} />
-                  </div>
-                ) : isConnected && ytProfile ? (
-                  <YoutubeProfileCard profile={ytProfile} onDisconnectSuccess={fetchYoutubeStatus} />
-                ) : (
-                  <ConnectYoutubeButton
-                    onLoadingStateChange={(isLoading) => setYtLoading(isLoading)}
-                    onConnectSuccess={handleYoutubeConnectSuccess}
-                  />
-                )
-              ) : (
-                isConnected ? (
-                  <FacebookProfileCard onDisconnect={() => setConnected((prev) => {
-                    localStorage.setItem("fb_connected", "false");
-                    return { ...prev, facebook: false };
-                  })} />
-                ) : (
-                  <ConnectFacebookButton onConnect={() => setConnected((prev) => {
-                    localStorage.setItem("fb_connected", "true");
-                    return { ...prev, facebook: true };
-                  })} />
-                )
-              )}
-            </div>
-          );
-        })}
+        {renderPlatformCard(platforms[0])}
+        <InstructionCard />
+        {renderPlatformCard(platforms[1])}
       </div>
 
       {/* Responsive */}

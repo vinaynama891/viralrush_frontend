@@ -116,6 +116,19 @@ function AppInner() {
     if (user) load();
   }, [user]);
 
+  // Listen for navigation events dispatched from child components (e.g. Studio button, Manage button)
+  useEffect(() => {
+    const handleNavigate = (e) => {
+      const key = e.detail;
+      if (key) {
+        setActiveSection(key);
+        setView("app");
+      }
+    };
+    window.addEventListener("viralrush_navigate", handleNavigate);
+    return () => window.removeEventListener("viralrush_navigate", handleNavigate);
+  }, []);
+
   const chartData = useMemo(() => {
     if (!state.analytics) return [];
     return state.analytics.charts.labels.map((l, i) => ({
@@ -167,7 +180,7 @@ function AppInner() {
 
   const handleAuthSuccess = (authUser, isSignup = false) => {
     setShowModal(false);
-    if (authUser?.role === "admin" || authUser?.email === "dkbharke99@gmail.com") {
+    if (authUser?.role === "admin" || authUser?.email === "sainitanishk38@gmail.com") {
       setView("admin");
     } else {
       setView("landing");
@@ -603,11 +616,18 @@ function AppInner() {
       <aside
         className={`app-sidebar${sidebarOpen ? " open" : ""}`}
         style={{
-          width: 220, flexShrink: 0,
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: 220,
+          height: "100vh",
+          zIndex: 999,
+          flexShrink: 0,
           background: "#111",
           borderRight: "1px solid rgba(255,255,255,0.07)",
-          display: "flex", flexDirection: "column",
-          height: "100vh", overflowY: "auto",
+          display: "flex",
+          flexDirection: "column",
+          overflowY: "auto",
         }}
       >
         {/* Logo */}

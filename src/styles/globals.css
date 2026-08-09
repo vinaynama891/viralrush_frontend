@@ -2531,11 +2531,20 @@ input::placeholder, textarea::placeholder { color: rgba(248,245,240,0.3); }
   display: flex;
   flex-direction: column;
   height: 100vh;
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
   overflow-y: auto;
   z-index: 999;
   transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+  margin-left: 220px;
+  min-height: 100vh;
+  position: relative;
 }
 
 /* Mobile hamburger button */
@@ -2578,6 +2587,7 @@ input::placeholder, textarea::placeholder { color: rgba(248,245,240,0.3); }
     display: flex;
   }
   .app-main {
+    margin-left: 0;
     padding-top: 70px;
     width: 100%;
   }

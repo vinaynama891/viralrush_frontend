@@ -49,12 +49,18 @@ export default function ManageVideosPage() {
         setLoading(false);
 
         // Load media + scheduled posts in parallel
+        // Use long timeout — Apify scraping can take 60-90 seconds
         const [mediaRes, schedRes] = await Promise.allSettled([
           api.get("/instagram/media"),
           api.get("/instagram/scheduled")
         ]);
-        if (mediaRes.status === "fulfilled") setMedia(mediaRes.value.data.media || []);
-        else setError("Could not load posts.");
+        if (mediaRes.status === "fulfilled") {
+          setMedia(mediaRes.value.data.media || []);
+        } else {
+          // Don't show error — just show empty state
+          console.warn("Media load failed:", mediaRes.reason);
+          setMedia([]);
+        }
         if (schedRes.status === "fulfilled") setScheduledPosts(schedRes.value.data.scheduledPosts || []);
         setMediaLoading(false);
       } catch {

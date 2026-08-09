@@ -5,8 +5,9 @@ import {
   Play, Heart, MessageCircle, Share2, Bookmark, Eye,
   CheckCircle, Sparkles, Clock, Users, ArrowUpRight,
   ChevronDown, X, Copy, Zap, Info, ShieldCheck, Video, LayoutGrid,
-  Globe, Languages, RefreshCw, ArrowLeft, Check
+  Globe, Languages, RefreshCw, ArrowLeft, Check, FileText
 } from "lucide-react";
+import { jsPDF } from "jspdf";
 import api, { getProxiedImage } from "../lib/api";
 
 const Youtube = ({ size = 24, ...props }) => (
@@ -85,6 +86,7 @@ export default function ViralPage() {
   const [refinedData, setRefinedData] = useState(null);
   const [showRefineModal, setShowRefineModal] = useState(false);
   const [selectedVideoToRefine, setSelectedVideoToRefine] = useState(null);
+  const [viewScript, setViewScript] = useState(null);
 
   const activePlatform = PLATFORMS.find(p => p.id === selectedPlatform) || PLATFORMS[0];
 
@@ -162,14 +164,18 @@ export default function ViralPage() {
         rank: idx + 1,
         platform: activePlatform.platformLabel,
         views: v.viewCount >= 1000000
-          ? `${(v.viewCount / 1000000).toFixed(1)}M`
-          : `${Math.round(v.viewCount / 1000)}K`,
+          ? `${(v.viewCount / 1000000).toFixed(1).replace(/\.0$/, "")}M+`
+          : v.viewCount >= 1000
+          ? `${(v.viewCount / 1000).toFixed(1).replace(/\.0$/, "")}K+`
+          : `${v.viewCount || 0}+`,
         likes: v.likeCount >= 1000000
-          ? `${(v.likeCount / 1000000).toFixed(1)}M`
-          : `${Math.round(v.likeCount / 1000)}K`,
+          ? `${(v.likeCount / 1000000).toFixed(1).replace(/\.0$/, "")}M+`
+          : v.likeCount >= 1000
+          ? `${(v.likeCount / 1000).toFixed(1).replace(/\.0$/, "")}K+`
+          : `${v.likeCount || 0}+`,
         comments: v.commentCount >= 1000
-          ? `${Math.round(v.commentCount / 1000)}K`
-          : `${v.commentCount}`,
+          ? `${(v.commentCount / 1000).toFixed(1).replace(/\.0$/, "")}K+`
+          : `${v.commentCount || 0}+`,
         engagementRate: `${v.engagementRate}%`,
         creator: `@${(v.channelTitle || "").replace(/\s+/g, "").toLowerCase()}`,
         hook: v.title,
@@ -859,7 +865,7 @@ export default function ViralPage() {
                       </div>
 
                       <button
-                        onClick={() => copyText(fullScriptText)}
+                        onClick={() => setViewScript(script)}
                         style={{
                           ...S.btnPrimary,
                           background: `linear-gradient(135deg, ${glowColor}, #db2777)`,
@@ -869,7 +875,7 @@ export default function ViralPage() {
                           marginTop: "auto"
                         }}
                       >
-                        <Copy size={14} /> Copy Full Script
+                        <Eye size={14} /> View Final Script
                       </button>
                     </div>
                   );
@@ -1239,7 +1245,218 @@ export default function ViralPage() {
             platform={selectedPlatform}
             onClose={() => setShowRefineModal(false)}
             onCopy={copyText}
+            showToast={showToast}
           />
+        )}
+      </AnimatePresence>
+
+      {/* View Script Modal */}
+      <AnimatePresence>
+        {viewScript && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 99999,
+              background: "rgba(0, 0, 0, 0.85)",
+              backdropFilter: "blur(12px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 20
+            }}
+            onClick={() => setViewScript(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              style={{
+                background: "linear-gradient(135deg, #13141c, #0b0c10)",
+                border: "1px solid rgba(124, 58, 237, 0.35)",
+                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(124, 58, 237, 0.15)",
+                borderRadius: 24,
+                width: "90%",
+                maxWidth: 680,
+                maxHeight: "90vh",
+                overflowY: "auto",
+                position: "relative",
+                display: "flex",
+                flexDirection: "column",
+                gap: 0,
+                padding: "36px 32px 32px"
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 28 }}>
+                <div>
+                  <span style={{
+                    display: "inline-block",
+                    background: "linear-gradient(135deg, #7c3aed, #db2777)",
+                    borderRadius: 100,
+                    padding: "4px 14px",
+                    fontSize: 10,
+                    fontWeight: 800,
+                    color: "#fff",
+                    letterSpacing: "2px",
+                    textTransform: "uppercase",
+                    marginBottom: 8
+                  }}>
+                    Script Style: {viewScript.style}
+                  </span>
+                  <h2 style={{ margin: 0, fontSize: "22px", fontWeight: 900, color: "#fff", fontFamily: "var(--font-primary)" }}>
+                    {viewScript.title}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setViewScript(null)}
+                  style={{
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    color: "#94a3b8",
+                    width: 32,
+                    height: 32,
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    transition: "all 0.2s"
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.background = "rgba(255,255,255,0.12)" }}
+                  onMouseLeave={e => { e.currentTarget.style.color = "#94a3b8"; e.currentTarget.style.background = "rgba(255,255,255,0.05)" }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Hook */}
+              <div style={{
+                background: "rgba(124, 58, 237, 0.08)",
+                border: "1px solid rgba(124, 58, 237, 0.25)",
+                padding: "20px",
+                borderRadius: 16,
+                marginBottom: 24
+              }}>
+                <span style={{ fontSize: "10px", fontWeight: 800, color: "#c084fc", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: 6 }}>
+                  🧲 Opening Hook
+                </span>
+                <p style={{ margin: 0, fontSize: "15px", fontWeight: 600, fontStyle: "italic", color: "#f3e8ff", lineHeight: 1.5 }}>
+                  "{viewScript.hook}"
+                </p>
+              </div>
+
+              {/* Body */}
+              <div style={{
+                background: "rgba(255,255,255,0.02)",
+                border: "1px solid rgba(255,255,255,0.05)",
+                padding: "24px",
+                borderRadius: 16,
+                marginBottom: 24
+              }}>
+                <span style={{ fontSize: "10px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: 12 }}>
+                  🗣️ Spoken Body & Visual Cues
+                </span>
+                <div style={{
+                  fontSize: "14px",
+                  lineHeight: 1.7,
+                  color: "#e2e8f0",
+                  fontFamily: "var(--font-ui)",
+                  whiteSpace: "pre-wrap"
+                }}>
+                  {(() => {
+                    const bodyText = viewScript.body;
+                    if (!bodyText) return null;
+                    const parts = bodyText.split(/(\[[^\]]+\])/g);
+                    return parts.map((part, i) => {
+                      if (part.startsWith("[") && part.endsWith("]")) {
+                        return (
+                          <span 
+                            key={i} 
+                            style={{ 
+                              display: "inline-block",
+                              background: "rgba(124,58,237,0.12)",
+                              border: "1px solid rgba(124,58,237,0.25)",
+                              borderRadius: "6px", 
+                              padding: "2px 8px", 
+                              margin: "2px 4px",
+                              color: "#c084fc",
+                              fontSize: "11px",
+                              fontWeight: 700,
+                              fontFamily: "var(--font-ui)",
+                              boxShadow: "0 0 8px rgba(124,58,237,0.06)",
+                            }}
+                          >
+                            {part.slice(1, -1)}
+                          </span>
+                        );
+                      }
+                      return <span key={i}>{part}</span>;
+                    });
+                  })()}
+                </div>
+              </div>
+
+              {/* CTA */}
+              <div style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.06)",
+                padding: "16px 20px",
+                borderRadius: 16,
+                marginBottom: 32
+              }}>
+                <span style={{ fontSize: "10px", fontWeight: 800, color: "#cbd5e1", textTransform: "uppercase", letterSpacing: "1px", display: "block", marginBottom: 6 }}>
+                  📢 Call to Action (CTA)
+                </span>
+                <p style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "#e2e8f0", lineHeight: 1.5 }}>
+                  {viewScript.cta}
+                </p>
+              </div>
+
+              {/* Footer Actions */}
+              <div style={{ display: "flex", gap: 12 }}>
+                <button
+                  onClick={() => {
+                    const fullText = `Title: ${viewScript.title}\n\nHook: ${viewScript.hook}\n\nBody:\n${viewScript.body}\n\nCTA: ${viewScript.cta}`;
+                    copyText(fullText);
+                  }}
+                  style={{
+                    ...S.btnPrimary,
+                    flex: 1,
+                    height: "48px",
+                    background: "linear-gradient(135deg, #7c3aed, #db2777)",
+                    fontSize: "14px"
+                  }}
+                >
+                  <Copy size={16} /> Copy Full Script
+                </button>
+                <button
+                  onClick={() => setViewScript(null)}
+                  style={{
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    color: "#fff",
+                    fontWeight: 700,
+                    borderRadius: "12px",
+                    cursor: "pointer",
+                    height: "48px",
+                    padding: "0 24px",
+                    fontSize: "14px",
+                    transition: "all 0.2s"
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)" }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)" }}
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -1908,7 +2125,7 @@ function getFinalFallback(title, hook, script, lang) {
 }
 
 // AI Content Refinement Modal (Interactive Step-by-Step Wizard)
-function RefineContentModal({ item, platform = "youtube", onClose, onCopy }) {
+function RefineContentModal({ item, platform = "youtube", onClose, onCopy, showToast }) {
   const [wizardStep, setWizardStep] = useState(0); // 0: Lang, 1: Hooks, 2: Scripts, 3: Final
   const [selectedLang, setSelectedLang] = useState("auto");
   const [loading, setLoading] = useState(false);
@@ -1922,6 +2139,159 @@ function RefineContentModal({ item, platform = "youtube", onClose, onCopy }) {
   const [selectedScript, setSelectedScript] = useState(null);
 
   const [refinedData, setRefinedData] = useState(null);
+  const [originalTranscript, setOriginalTranscript] = useState("");
+
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    if (!refinedData) return;
+    setPdfLoading(true);
+    try {
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+      });
+
+      let fontName = "helvetica";
+
+      try {
+        const fontUrl = "https://cdn.jsdelivr.net/gh/google/fonts/ofl/poppins/Poppins-Regular.ttf";
+        const response = await fetch(fontUrl);
+        if (response.ok) {
+          const fontBuffer = await response.arrayBuffer();
+          const fontBytes = new Uint8Array(fontBuffer);
+          let fontBinary = "";
+          for (let i = 0; i < fontBytes.length; i++) {
+            fontBinary += String.fromCharCode(fontBytes[i]);
+          }
+          doc.addFileToVFS("Poppins-Regular.ttf", btoa(fontBinary));
+          doc.addFont("Poppins-Regular.ttf", "Poppins", "normal");
+          fontName = "Poppins";
+        }
+      } catch (fontErr) {
+        console.warn("Could not load custom Poppins font, falling back to Helvetica:", fontErr);
+        fontName = "helvetica";
+      }
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      const contentWidth = pageWidth - (margin * 2);
+
+      let y = 40;
+
+      const sanitizeText = (txt) => {
+        if (typeof txt !== "string") return "";
+        return txt.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, "");
+      };
+
+      const addSectionHeader = (titleText) => {
+        if (y + 12 > pageHeight - 25) {
+          doc.addPage();
+          y = 40;
+        }
+        doc.setFont(fontName, fontName === "Poppins" ? "normal" : "bold");
+        doc.setFontSize(fontName === "Poppins" ? 14 : 13);
+        doc.setTextColor(124, 58, 237);
+        doc.text(titleText.toUpperCase(), margin, y);
+        y += 6;
+      };
+
+      const addContentBlock = (text, isItalic = false) => {
+        doc.setFont(fontName, (fontName === "Poppins" || !isItalic) ? "normal" : "italic");
+        doc.setFontSize(10);
+        doc.setTextColor(30, 41, 59);
+        
+        const cleanText = sanitizeText(text);
+        const lines = doc.splitTextToSize(cleanText, contentWidth);
+        for (let i = 0; i < lines.length; i++) {
+          if (y + 6 > pageHeight - 25) {
+            doc.addPage();
+            y = 40;
+          }
+          doc.text(lines[i], margin, y);
+          y += 6;
+        }
+        y += 6;
+      };
+
+      if (refinedData.title) {
+        addSectionHeader("Refined Title Idea");
+        addContentBlock(refinedData.title);
+      }
+
+      const hookText = refinedData.script?.hook || selectedHook?.text;
+      if (hookText) {
+        addSectionHeader("Selected Opening Hook");
+        addContentBlock(`"${hookText}"`, true);
+      }
+
+      const scriptText = selectedScript?.text || refinedData.script?.fullScript;
+      if (scriptText) {
+        addSectionHeader("Full Word-for-Word Script");
+        addContentBlock(scriptText);
+      }
+
+      if (refinedData.caption) {
+        addSectionHeader("Caption & Description");
+        addContentBlock(refinedData.caption);
+      }
+
+      if (refinedData.hashtags && refinedData.hashtags.length > 0) {
+        addSectionHeader("Best Viral Hashtags");
+        const hashtagString = refinedData.hashtags.map(h => `#${h}`).join(" ");
+        addContentBlock(hashtagString);
+      }
+
+      const totalPages = doc.internal.pages.length - 1;
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.5);
+        doc.line(margin, 26, pageWidth - margin, 26);
+
+        doc.setFont(fontName, fontName === "Poppins" ? "normal" : "bold");
+        doc.setFontSize(fontName === "Poppins" ? 17 : 16);
+        doc.setTextColor(124, 58, 237);
+        const logoText = "VIRALRUSH";
+        const logoWidth = doc.getTextWidth(logoText);
+        doc.text(logoText, (pageWidth - logoWidth) / 2, 17);
+
+        doc.setFont(fontName, "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(100, 116, 139);
+        const subtitleText = "AI-POWERED CREATOR HUB";
+        const subtitleWidth = doc.getTextWidth(subtitleText);
+        doc.text(subtitleText, (pageWidth - subtitleWidth) / 2, 22);
+
+        doc.line(margin, pageHeight - 16, pageWidth - margin, pageHeight - 16);
+
+        doc.setFont(fontName, "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(148, 163, 184);
+        
+        doc.text("Generated by ViralRush Creator AI", margin, pageHeight - 10);
+
+        const pageText = `Page ${i} of ${totalPages}`;
+        const pageTextWidth = doc.getTextWidth(pageText);
+        doc.text(pageText, pageWidth - margin - pageTextWidth, pageHeight - 10);
+      }
+
+      doc.save(`viralrush-refined-${Date.now()}.pdf`);
+      if (showToast) {
+        showToast("PDF downloaded successfully!");
+      }
+    } catch (err) {
+      console.error("PDF download error:", err);
+      if (showToast) {
+        showToast("Failed to generate PDF. Please try again.");
+      }
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   if (!item) return null;
 
@@ -1958,11 +2328,12 @@ function RefineContentModal({ item, platform = "youtube", onClose, onCopy }) {
     }
   };
 
-  // Step 2: Generate 3 Scripts based on selected Hook
+  // Step 2: Generate Script based on selected Hook
   const handleGenerateScripts = async () => {
     if (!selectedHook) return;
     setLoading(true);
     setError(null);
+    setOriginalTranscript("");
     try {
       const { data } = await api.post("/viral-content/refine", {
         videoId: item.id || item.videoId,
@@ -1977,19 +2348,59 @@ function RefineContentModal({ item, platform = "youtube", onClose, onCopy }) {
         videoUrl: item.videoUrl || item.link || ""
       });
 
-      if (data.success && data.refined && Array.isArray(data.refined.scripts)) {
-        setScripts(data.refined.scripts);
-        setSelectedScript(data.refined.scripts[0]); // auto-select first one
-        setWizardStep(2);
+      if (data.success && data.refined && Array.isArray(data.refined.scripts) && data.refined.scripts.length > 0) {
+        const singleScript = data.refined.scripts[0];
+        setScripts([singleScript]);
+        setSelectedScript(singleScript);
+        if (data.refined.transcript) {
+          setOriginalTranscript(data.refined.transcript);
+        }
+        // Auto-advance to Step 3 (final), skip script selection
+        await handleGenerateFinalWithScript(singleScript);
       } else {
         throw new Error("Invalid response format from scripts API");
       }
     } catch (err) {
       console.warn("Scripts API failed, triggering local fallback:", err.message);
       const fallbackScripts = getScriptsFallback(item.title, selectedHook.text, selectedLang);
-      setScripts(fallbackScripts);
-      setSelectedScript(fallbackScripts[0]);
+      const singleScript = fallbackScripts[0];
+      setScripts([singleScript]);
+      setSelectedScript(singleScript);
       setWizardStep(2);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Generate Final with a specific script (used when auto-advancing from script gen)
+  const handleGenerateFinalWithScript = async (scriptObj) => {
+    if (!selectedHook || !scriptObj) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { data } = await api.post("/viral-content/refine", {
+        videoId: item.id || item.videoId,
+        title: item.title,
+        description: item.caption || item.description,
+        platform: platform,
+        channelTitle: item.channelTitle || item.creator,
+        targetLanguage: selectedLang,
+        step: "final",
+        selectedHook: selectedHook.text,
+        selectedScript: scriptObj.text
+      });
+
+      if (data.success && data.refined) {
+        setRefinedData(data.refined);
+        setWizardStep(3);
+      } else {
+        throw new Error("Invalid response format from final refinement API");
+      }
+    } catch (err) {
+      console.warn("Final API failed, triggering local fallback:", err.message);
+      const fallbackFinal = getFinalFallback(item.title, selectedHook.text, scriptObj.text, selectedLang);
+      setRefinedData(fallbackFinal);
+      setWizardStep(3);
     } finally {
       setLoading(false);
     }
@@ -2036,6 +2447,7 @@ function RefineContentModal({ item, platform = "youtube", onClose, onCopy }) {
     setScripts([]);
     setSelectedScript(null);
     setRefinedData(null);
+    setOriginalTranscript("");
   };
 
   return (
@@ -2322,6 +2734,18 @@ function RefineContentModal({ item, platform = "youtube", onClose, onCopy }) {
                 <span style={{ fontWeight: 700, color: "#a78bfa" }}>Selected Hook: </span>
                 "{selectedHook?.text}"
               </div>
+
+              {originalTranscript && (
+                <div style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.05)", borderRadius: "12px", padding: "16px" }}>
+                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#a78bfa", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <Languages size={14} />
+                    Original Video Transcript (Transcribed)
+                  </div>
+                  <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.7)", lineHeight: 1.5, maxHeight: "120px", overflowY: "auto", background: "rgba(0,0,0,0.15)", padding: "12px", borderRadius: "8px", fontStyle: "italic", whiteSpace: "pre-wrap" }}>
+                    {typeof originalTranscript === "string" ? originalTranscript : (originalTranscript?.transcript || JSON.stringify(originalTranscript))}
+                  </div>
+                </div>
+              )}
               
               <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 {scripts.map((sc, idx) => {
@@ -2446,14 +2870,14 @@ function RefineContentModal({ item, platform = "youtube", onClose, onCopy }) {
                 </div>
               </div>
 
-              {/* Refined Script (Selected Hook + Selected Script) */}
+              {/* Refined Script */}
               <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px", padding: "20px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
                   <div style={{ fontSize: "14px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
                     <Sparkles size={16} color="#a78bfa" /> Final Script & Hook
                   </div>
-                  <button onClick={() => onCopy(refinedData.script?.fullScript || selectedScript?.text)} style={{ background: "none", border: "none", color: "#a78bfa", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 600 }}>
-                    <Copy size={12} /> Copy Refined Script
+                  <button onClick={() => onCopy(selectedScript?.text || refinedData.script?.fullScript)} style={{ background: "none", border: "none", color: "#a78bfa", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 600 }}>
+                    <Copy size={12} /> Copy Script
                   </button>
                 </div>
 
@@ -2465,11 +2889,31 @@ function RefineContentModal({ item, platform = "youtube", onClose, onCopy }) {
                   </div>
                 </div>
 
-                {/* Spoken Script */}
+                {/* Original Transcript reference */}
+                {originalTranscript && (
+                  <div style={{ marginBottom: "16px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.05)", borderRadius: "10px", padding: "12px 14px" }}>
+                    <div style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <Languages size={12} />
+                      Original Transcript — {typeof originalTranscript === "string" ? originalTranscript.split(/\s+/).filter(Boolean).length : 0} words
+                    </div>
+                    <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, maxHeight: "80px", overflowY: "auto", fontStyle: "italic", whiteSpace: "pre-wrap" }}>
+                      {typeof originalTranscript === "string" ? originalTranscript : (originalTranscript?.transcript || "")}
+                    </div>
+                  </div>
+                )}
+
+                {/* Generated Script with word count */}
                 <div>
-                  <div style={{ fontSize: "12px", color: "#cbd5e1", fontWeight: 700, marginBottom: "8px" }}>Full Word-for-Word Script:</div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                    <div style={{ fontSize: "12px", color: "#cbd5e1", fontWeight: 700 }}>Generated Script (Full Word-for-Word):</div>
+                    {selectedScript?.text && (
+                      <span style={{ fontSize: "11px", fontWeight: 700, color: "#a78bfa", background: "rgba(124,58,237,0.12)", padding: "2px 10px", borderRadius: "100px", border: "1px solid rgba(124,58,237,0.25)" }}>
+                        {selectedScript.text.split(/\s+/).filter(Boolean).length} words
+                      </span>
+                    )}
+                  </div>
                   <div style={{ fontSize: "13px", color: "#cbd5e1", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.06)", padding: "16px", borderRadius: "12px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
-                    {refinedData.script?.fullScript || selectedScript?.text}
+                    {selectedScript?.text || refinedData.script?.fullScript}
                   </div>
                 </div>
               </div>
@@ -2488,6 +2932,42 @@ function RefineContentModal({ item, platform = "youtube", onClose, onCopy }) {
                   {refinedData.caption}
                 </div>
               </div>
+
+              {/* Generate PDF Button */}
+              <button
+                type="button"
+                onClick={handleDownloadPDF}
+                disabled={pdfLoading}
+                style={{
+                  background: "linear-gradient(135deg, #7c3aed, #db2777)",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "14px",
+                  padding: "14px 20px",
+                  fontSize: "14px",
+                  fontWeight: 700,
+                  cursor: pdfLoading ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  transition: "all 0.2s ease",
+                  width: "100%",
+                  opacity: pdfLoading ? 0.7 : 1,
+                  boxShadow: "0 4px 15px rgba(124, 58, 237, 0.2)"
+                }}
+              >
+                {pdfLoading ? (
+                  <>
+                    <div style={{ width: "16px", height: "16px", border: "2px solid #fff", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                    Generating PDF...
+                  </>
+                ) : (
+                  <>
+                    <FileText size={16} /> Generate & Download PDF
+                  </>
+                )}
+              </button>
 
               {/* Refined Hashtags */}
               <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "16px", padding: "20px" }}>
