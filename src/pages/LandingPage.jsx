@@ -693,62 +693,63 @@ function PricingSection({ onLoginOpen, user, onGoToApp }) {
     {
       id: 'starter',
       name: 'Starter',
-      tagline: 'Perfect for small stores starting with automation.',
-      monthly: 39,
-      annualMonthly: 33,
-      annualTotal: 396,
+      tagline: 'Ideal for individual creators starting out with AI script generation.',
+      monthly: 499,
+      annualMonthly: 399,
+      annualTotal: 4788,
       cta: 'Get Started',
       popular: false,
       included: [
-        { text: 'Up to 1,000 active contacts',       yes: true  },
-        { text: 'Basic Visual Flow Builder',          yes: true  },
-        { text: 'Instagram DM Automation',            yes: true  },
-        { text: 'Standard Support',                   yes: true  },
-        { text: 'Basic Analytics',                    yes: true  },
-        { text: 'WhatsApp Campaigns',                 yes: false },
-        { text: 'Advanced Audience Segmentation',     yes: false },
-        { text: 'Custom Webhooks',                    yes: false },
-        { text: 'Dedicated Account Manager',          yes: false },
+        { text: '60 AI Script Generations / month', yes: true  },
+        { text: 'Hook, Body & CTA Script Generator',   yes: true  },
+        { text: 'Multi-Language (Hindi, Hinglish, EN)',yes: true  },
+        { text: 'Viral Content Discoverer (100 searches)',yes: true},
+        { text: 'Content Calendar & Schedule Sync',   yes: true  },
+        { text: 'Standard Email Support',             yes: true  },
+        { text: 'AI Retention Diagnostics',            yes: false },
+        { text: 'Competitor Channel Breakdown',        yes: false },
+        { text: 'Custom Brand Voice Engine',          yes: false },
       ],
     },
     {
       id: 'pro',
       name: 'Pro',
-      tagline: 'Everything you need to scale your omnichannel sales.',
-      monthly: 99,
-      annualMonthly: 83,
-      annualTotal: 996,
-      cta: 'Get Started',
+      tagline: 'Best for serious creators & influencers scaling their content reach.',
+      monthly: 1499,
+      annualMonthly: 1199,
+      annualTotal: 14388,
+      cta: 'Start Pro Plan',
       popular: true,
       included: [
-        { text: 'Up to 10,000 active contacts',       yes: true  },
-        { text: 'Advanced Visual Flow Builder',       yes: true  },
-        { text: 'Instagram DM Automation',            yes: true  },
-        { text: 'WhatsApp Campaigns',                 yes: true  },
-        { text: 'Advanced Audience Segmentation',     yes: true  },
-        { text: 'Priority Support',                   yes: true  },
-        { text: 'Advanced ROI Analytics',             yes: true  },
-        { text: 'Custom Webhooks',                    yes: false },
+        { text: '120 AI Script Generations / month', yes: true  },
+        { text: 'Everything in Starter',              yes: true  },
+        { text: 'AI Retention Diagnostics & Virality Score', yes: true },
+        { text: 'Unlimited Viral Trend Discoveries',  yes: true  },
+        { text: 'Competitor Video Breakdown & Insights', yes: true },
+        { text: 'AI Captions & Hashtag Generator',    yes: true  },
+        { text: 'Priority Email & Chat Support',       yes: true  },
+        { text: 'Custom Brand Voice Engine',          yes: false },
         { text: 'Dedicated Account Manager',          yes: false },
       ],
     },
     {
       id: 'enterprise',
       name: 'Enterprise',
-      tagline: 'Custom limits and dedicated support for large teams.',
-      monthly: 299,
-      annualMonthly: 249,
-      annualTotal: 2988,
-      cta: 'Get Started',
+      tagline: 'Designed for agencies, brand teams & high-volume content studios.',
+      monthly: 3999,
+      annualMonthly: 3199,
+      annualTotal: 38388,
+      cta: 'Go Enterprise',
       popular: false,
       included: [
-        { text: 'Unlimited active contacts',          yes: true  },
+        { text: '300 AI Script Generations / month', yes: true  },
         { text: 'Everything in Pro',                  yes: true  },
-        { text: 'Custom Webhooks & Integrations',     yes: true  },
+        { text: 'Custom Brand Engine (Train AI on your voice)', yes: true },
+        { text: 'Deep Competitor Channel Analytics', yes: true  },
+        { text: 'Team Collaboration (Up to 5 seats)', yes: true  },
+        { text: 'Custom Webhooks & API Access',       yes: true  },
         { text: 'Dedicated Account Manager',          yes: true  },
-        { text: '24/7 Phone Support',                 yes: true  },
-        { text: 'Custom Onboarding',                  yes: true  },
-        { text: 'A/B Testing Nodes',                  yes: true  },
+        { text: '24/7 Priority Support & Onboarding', yes: true  },
       ],
     },
   ];
@@ -821,16 +822,16 @@ function PricingSection({ onLoginOpen, user, onGoToApp }) {
             <p className="pricing-plan-tagline">{plan.tagline}</p>
 
             <div className="pricing-price-row">
-              <span className="pricing-dollar">$</span>
+              <span className="pricing-dollar">₹</span>
               <span className="pricing-amount">
-                {yearly ? plan.annualMonthly : plan.monthly}
+                {(yearly ? plan.annualMonthly : plan.monthly).toLocaleString('en-IN')}
               </span>
               <span className="pricing-per">/mo</span>
             </div>
 
             {yearly && (
               <p className="pricing-billed-note">
-                Billed annually at ${plan.annualTotal}
+                Billed annually at ₹{plan.annualTotal.toLocaleString('en-IN')}
               </p>
             )}
 

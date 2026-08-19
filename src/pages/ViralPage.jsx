@@ -32,6 +32,42 @@ const S = {
   btnPrimary: { background: "linear-gradient(135deg, #7c3aed, #db2777)", color: "#fff", fontWeight: 700, borderRadius: "12px", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", boxShadow: "0 4px 20px rgba(124, 58, 237, 0.3)" }
 };
 
+const renderScriptBodyText = (text, defaultColor = "#f8fafc") => {
+  if (!text) return null;
+  const parts = text.split(/(\[[^\]]+\])/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("[") && part.endsWith("]")) {
+      const cue = part.slice(1, -1);
+      return (
+        <span
+          key={i}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            background: "rgba(124, 58, 237, 0.22)",
+            border: "1px solid rgba(167, 139, 250, 0.45)",
+            borderRadius: "6px",
+            padding: "2px 8px",
+            margin: "2px 4px",
+            color: "#e9d5ff",
+            fontSize: "12px",
+            fontWeight: 700,
+            fontFamily: "var(--font-ui, system-ui, sans-serif)",
+            boxShadow: "0 2px 8px rgba(124, 58, 237, 0.15)",
+            verticalAlign: "middle",
+            lineHeight: "1.4"
+          }}
+        >
+          <span style={{ fontSize: "11px" }}>🎬</span> {cue}
+        </span>
+      );
+    }
+    return <span key={i} style={{ color: defaultColor }}>{part}</span>;
+  });
+};
+
+
 // Platform configuration for the selector
 const PLATFORMS = [
   {
@@ -789,23 +825,24 @@ export default function ViralPage() {
 
             {/* 3. THREE GENERATED ORIGINAL SCRIPTS */}
             <div>
-              <h3 style={{ fontSize: "18px", fontWeight: 900, color: "#fff", marginBottom: "20px", display: "flex", alignItems: "center", gap: "10px" }}>
-                <Sparkles size={20} color="#e1306c" /> 3 Original Script Variations
+              <h3 style={{ fontSize: "20px", fontWeight: 900, color: "#fff", marginBottom: "20px", display: "flex", alignItems: "center", gap: "10px" }}>
+                <Sparkles size={22} color="#e1306c" /> 3 Original Script Variations
               </h3>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "24px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "24px" }}>
                 {instagramResults.scripts.map((script, idx) => {
-                  const glowColor = idx === 0 ? "#833ab4" : idx === 1 ? "#fd1d1d" : "#7c3aed";
-                  const gradient = idx === 0
-                    ? "linear-gradient(135deg, rgba(131,58,180,0.15), rgba(253,29,29,0.05))"
+                  const glowColor = idx === 0 ? "#a855f7" : idx === 1 ? "#f43f5e" : "#8b5cf6";
+                  const icon = idx === 0 ? "🔥" : idx === 1 ? "💡" : "🎭";
+                  const bgGradient = idx === 0
+                    ? "linear-gradient(145deg, rgba(168,85,247,0.12), rgba(15,23,42,0.95))"
                     : idx === 1
-                      ? "linear-gradient(135deg, rgba(253,29,29,0.15), rgba(252,176,69,0.05))"
-                      : "linear-gradient(135deg, rgba(124,58,237,0.15), rgba(219,39,119,0.05))";
-                  const border = idx === 0
-                    ? "1px solid rgba(131,58,180,0.3)"
+                      ? "linear-gradient(145deg, rgba(244,63,94,0.12), rgba(15,23,42,0.95))"
+                      : "linear-gradient(145deg, rgba(139,92,246,0.12), rgba(15,23,42,0.95))";
+                  const borderStyle = idx === 0
+                    ? "1px solid rgba(168,85,247,0.35)"
                     : idx === 1
-                      ? "1px solid rgba(253,29,29,0.3)"
-                      : "1px solid rgba(124,58,237,0.3)";
+                      ? "1px solid rgba(244,63,94,0.35)"
+                      : "1px solid rgba(139,92,246,0.35)";
 
                   const fullScriptText = `Title: ${script.title}\n\nHook: ${script.hook}\n\nBody:\n${script.body}\n\nCTA: ${script.cta}`;
 
@@ -814,69 +851,173 @@ export default function ViralPage() {
                       key={idx}
                       style={{
                         ...S.glass,
-                        background: gradient,
-                        border: border,
+                        background: bgGradient,
+                        border: borderStyle,
                         borderRadius: "24px",
                         padding: "24px",
                         display: "flex",
                         flexDirection: "column",
-                        gap: "16px"
+                        gap: "18px",
+                        boxShadow: "0 12px 32px rgba(0,0,0,0.35)",
+                        position: "relative",
+                        overflow: "hidden"
                       }}
                     >
-                      <div>
-                        <span style={{ fontSize: "10px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "2px", color: glowColor }}>
-                          Script Style: {script.style}
-                        </span>
-                        <h4 style={{ margin: "6px 0 0 0", fontSize: "16px", fontWeight: 800, color: "#fff" }}>
+                      {/* Header */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <span style={{
+                            fontSize: "11px",
+                            fontWeight: 800,
+                            textTransform: "uppercase",
+                            letterSpacing: "1.5px",
+                            color: glowColor,
+                            background: `${glowColor}18`,
+                            border: `1px solid ${glowColor}40`,
+                            padding: "4px 12px",
+                            borderRadius: "20px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px"
+                          }}>
+                            <span>{icon}</span> Script Style: {script.style}
+                          </span>
+
+                          <span style={{ fontSize: "11px", fontWeight: 700, color: "rgba(255,255,255,0.4)" }}>
+                            Option #{idx + 1}
+                          </span>
+                        </div>
+
+                        <h4 style={{ margin: "4px 0 0 0", fontSize: "18px", fontWeight: 800, color: "#ffffff", lineHeight: 1.35 }}>
                           {script.title}
                         </h4>
                       </div>
 
-                      <div style={{ background: "rgba(0,0,0,0.25)", padding: "12px 16px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.03)" }}>
-                        <span style={{ fontSize: "10px", fontWeight: 700, color: "#94a3b8", display: "block", marginBottom: "4px" }}>HOOK</span>
-                        <p style={{ margin: 0, fontSize: "13px", fontStyle: "italic", color: "#e2e8f0" }}>"{script.hook}"</p>
+                      {/* HOOK Section */}
+                      <div style={{
+                        background: "rgba(244, 63, 94, 0.08)",
+                        border: "1px solid rgba(244, 63, 94, 0.25)",
+                        borderRadius: "14px",
+                        padding: "14px 16px"
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                          <span style={{ fontSize: "10.5px", fontWeight: 800, color: "#f43f5e", textTransform: "uppercase", letterSpacing: "1px" }}>
+                            🧲 Opening Hook
+                          </span>
+                          <button
+                            onClick={() => copyText(script.hook)}
+                            title="Copy Hook"
+                            style={{ background: "none", border: "none", color: "#f43f5e", cursor: "pointer", opacity: 0.8, display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", fontWeight: 700 }}
+                          >
+                            <Copy size={12} /> Copy
+                          </button>
+                        </div>
+                        <p style={{ margin: 0, fontSize: "14px", fontStyle: "italic", color: "#ffe4e6", lineHeight: 1.5, fontWeight: 500 }}>
+                          "{script.hook}"
+                        </p>
                       </div>
 
-                      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                        <span style={{ fontSize: "10px", fontWeight: 700, color: "#94a3b8" }}>BODY</span>
+                      {/* BODY Section */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <span style={{ fontSize: "10.5px", fontWeight: 800, color: "#818cf8", textTransform: "uppercase", letterSpacing: "1px" }}>
+                            🗣️ Spoken Body & Visual Cues
+                          </span>
+                          <button
+                            onClick={() => copyText(script.body)}
+                            title="Copy Body"
+                            style={{ background: "none", border: "none", color: "#818cf8", cursor: "pointer", opacity: 0.8, display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", fontWeight: 700 }}
+                          >
+                            <Copy size={12} /> Copy
+                          </button>
+                        </div>
+
                         <div
                           style={{
-                            fontSize: "13px",
-                            lineHeight: 1.6,
-                            color: "#fff",
-                            maxHeight: "180px",
+                            fontSize: "14px",
+                            lineHeight: 1.65,
+                            color: "#f8fafc",
+                            minHeight: "140px",
+                            maxHeight: "340px",
                             overflowY: "auto",
-                            background: "rgba(0,0,0,0.15)",
-                            padding: "14px",
-                            borderRadius: "12px",
-                            border: "1px solid rgba(255,255,255,0.03)",
-                            fontFamily: "var(--font-mono, monospace)",
+                            background: "rgba(15, 23, 42, 0.75)",
+                            padding: "16px",
+                            borderRadius: "14px",
+                            border: "1px solid rgba(99, 102, 241, 0.25)",
+                            fontFamily: "var(--font-ui, system-ui, -apple-system, sans-serif)",
                             whiteSpace: "pre-wrap"
                           }}
                           className="custom-scrollbar"
                         >
-                          {script.body}
+                          {renderScriptBodyText(script.body)}
                         </div>
                       </div>
 
-                      <div style={{ background: "rgba(0,0,0,0.25)", padding: "12px 16px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.03)" }}>
-                        <span style={{ fontSize: "10px", fontWeight: 700, color: "#94a3b8", display: "block", marginBottom: "4px" }}>CALL TO ACTION (CTA)</span>
-                        <p style={{ margin: 0, fontSize: "13px", color: "#e2e8f0" }}>{script.cta}</p>
+                      {/* CTA Section */}
+                      <div style={{
+                        background: "rgba(16, 185, 129, 0.08)",
+                        border: "1px solid rgba(16, 185, 129, 0.25)",
+                        borderRadius: "14px",
+                        padding: "14px 16px"
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                          <span style={{ fontSize: "10.5px", fontWeight: 800, color: "#34d399", textTransform: "uppercase", letterSpacing: "1px" }}>
+                            📢 Call to Action (CTA)
+                          </span>
+                          <button
+                            onClick={() => copyText(script.cta)}
+                            title="Copy CTA"
+                            style={{ background: "none", border: "none", color: "#34d399", cursor: "pointer", opacity: 0.8, display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", fontWeight: 700 }}
+                          >
+                            <Copy size={12} /> Copy
+                          </button>
+                        </div>
+                        <p style={{ margin: 0, fontSize: "13.5px", color: "#ecfdf5", lineHeight: 1.5, fontWeight: 600 }}>
+                          {script.cta}
+                        </p>
                       </div>
 
-                      <button
-                        onClick={() => setViewScript(script)}
-                        style={{
-                          ...S.btnPrimary,
-                          background: `linear-gradient(135deg, ${glowColor}, #db2777)`,
-                          height: "44px",
-                          width: "100%",
-                          fontSize: "13px",
-                          marginTop: "auto"
-                        }}
-                      >
-                        <Eye size={14} /> View Final Script
-                      </button>
+                      {/* Action Buttons */}
+                      <div style={{ display: "flex", gap: "10px", marginTop: "auto", paddingTop: "6px" }}>
+                        <button
+                          onClick={() => copyText(fullScriptText)}
+                          style={{
+                            ...S.glass,
+                            flex: 1,
+                            height: "44px",
+                            borderRadius: "12px",
+                            fontSize: "13px",
+                            fontWeight: 700,
+                            color: "#fff",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "6px",
+                            background: "rgba(255,255,255,0.06)",
+                            border: "1px solid rgba(255,255,255,0.12)",
+                            transition: "all 0.2s"
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.12)"}
+                          onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
+                        >
+                          <Copy size={14} /> Copy Full Script
+                        </button>
+
+                        <button
+                          onClick={() => setViewScript(script)}
+                          style={{
+                            ...S.btnPrimary,
+                            flex: 1,
+                            background: `linear-gradient(135deg, ${glowColor}, #db2777)`,
+                            height: "44px",
+                            fontSize: "13px",
+                            borderRadius: "12px"
+                          }}
+                        >
+                          <Eye size={14} /> View Details
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -2786,17 +2927,20 @@ function RefineContentModal({ item, platform = "youtube", onClose, onCopy, showT
                       </div>
                       
                       <div style={{ 
-                        fontSize: "13px", 
-                        color: isSelected ? "#fff" : "#cbd5e1", 
-                        lineHeight: "1.6", 
-                        maxHeight: "150px", 
+                        fontSize: "14px", 
+                        color: isSelected ? "#ffffff" : "#f1f5f9", 
+                        lineHeight: "1.65", 
+                        minHeight: "100px",
+                        maxHeight: "280px", 
                         overflowY: "auto",
-                        background: "rgba(0,0,0,0.15)",
-                        padding: "12px",
-                        borderRadius: "8px",
-                        whiteSpace: "pre-wrap"
-                      }}>
-                        {sc.text}
+                        background: "rgba(15, 23, 42, 0.8)",
+                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        padding: "16px",
+                        borderRadius: "12px",
+                        whiteSpace: "pre-wrap",
+                        fontFamily: "var(--font-ui, system-ui, sans-serif)"
+                      }} className="custom-scrollbar">
+                        {renderScriptBodyText(sc.text)}
                       </div>
                     </div>
                   );

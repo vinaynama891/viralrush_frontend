@@ -1796,17 +1796,20 @@ export default function AnalyzeCompetitorPage() {
                               </div>
                               
                               <div style={{ 
-                                fontSize: "13px", 
-                                color: isSelected ? "#fff" : "#cbd5e1", 
-                                lineHeight: "1.6", 
-                                maxHeight: "150px", 
+                                fontSize: "14px", 
+                                color: isSelected ? "#ffffff" : "#f1f5f9", 
+                                lineHeight: "1.65", 
+                                minHeight: "100px",
+                                maxHeight: "280px", 
                                 overflowY: "auto",
-                                background: "rgba(0,0,0,0.15)",
-                                padding: "12px",
-                                borderRadius: "8px",
-                                whiteSpace: "pre-wrap"
-                              }}>
-                                {sc.text}
+                                background: "rgba(15, 23, 42, 0.8)",
+                                border: "1px solid rgba(255, 255, 255, 0.08)",
+                                padding: "16px",
+                                borderRadius: "12px",
+                                whiteSpace: "pre-wrap",
+                                fontFamily: "var(--font-ui, system-ui, sans-serif)"
+                              }} className="custom-scrollbar">
+                                {renderScriptBodyText(sc.text)}
                               </div>
                             </div>
                           );
