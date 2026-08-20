@@ -182,9 +182,14 @@ function AppInner() {
     setShowModal(false);
     if (authUser?.role === "admin" || authUser?.email === "sainitanishk38@gmail.com") {
       setView("admin");
-    } else {
+    } else if (isSignup) {
+      // Naye user ko landing page pe celebration dikhao
       setView("landing");
       setShowCelebration(true);
+    } else {
+      // Existing user seedha dashboard pe jaaye
+      setActiveSection("dashboard");
+      setView("app");
     }
   };
 

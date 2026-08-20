@@ -39,6 +39,17 @@ export default function LoginRegisterModal({
     return () => clearInterval(interval);
   }, [resendTimer]);
 
+  // Sync mode with initialMode prop when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode);
+      setOtpState(null);
+      setOtpValue("");
+      setLocalError("");
+      setRegistrationStep(1);
+    }
+  }, [isOpen, initialMode]);
+
   if (!isOpen) return null;
 
   const handleModeSwitch = (newMode) => {
@@ -614,9 +625,9 @@ export default function LoginRegisterModal({
               <>
                 <div style={{ marginBottom: 16 }}>
                   <input
-                    type="email"
+                    type="text"
                     name="email"
-                    placeholder="Email Address"
+                    placeholder="Email Address or Username"
                     className="form-input"
                     value={formData.email}
                     onChange={handleInputChange}
